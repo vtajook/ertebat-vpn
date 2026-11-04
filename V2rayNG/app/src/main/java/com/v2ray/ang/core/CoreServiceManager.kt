@@ -511,7 +511,7 @@ object CoreServiceManager {
                     CoroutineScope(Dispatchers.Default).launch {
                         try {
                             serviceControl.stopService()
-                            delay(500L)
+                            delay(1200L)
                             LauncherManager.startService(serviceControl.getService())
                         } finally {
                             pendingResult.finish()

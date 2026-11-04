@@ -77,7 +77,7 @@ class OpenVpnService : VpnService() {
                     stopVpn()
                     android.os.Handler(mainLooper).postDelayed({
                         LauncherManager.startService(this@OpenVpnService)
-                    }, 800L)
+                    }, 1200L)
                 }
             }
         }
@@ -121,16 +121,41 @@ class OpenVpnService : VpnService() {
     }
 
     private fun runSession(config: ProfileItem) {
+        // Right after switching from another protocol the first attempt can be rejected (the previous
+        // tunnel is still going down). One silent retry is what a manual reconnect did before.
+        var attempt = 1
+        while (true) {
+            val retry = runAttempt(config, attempt)
+            if (!retry || stopping.get()) break
+            attempt++
+            try {
+                Thread.sleep(1500)
+            } catch (_: InterruptedException) {
+                break
+            }
+            if (stopping.get()) break
+        }
+        if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
+    }
+
+    /** @return true when the attempt ended with a failed login that is worth one more try. */
+    private fun runAttempt(config: ProfileItem, attempt: Int): Boolean {
+        var retryLogin = false
         val listener = object : OpenVpnEngine.Listener {
             override fun onState(name: String, info: String) {
                 LogUtil.i(AppConfig.TAG, "OpenVPN event: $name $info")
                 when (name) {
                     "CONNECTED" -> onConnected()
                     "AUTH_FAILED" -> {
-                        fail("AUTH_FAILED: $info".trim(':', ' '))
+                        if (attempt == 1 && !connected && !stopping.get()) {
+                            retryLogin = true
+                            Thread({ runCatching { engine?.stop() } }, "ovpn-retry-stop").start()
+                        } else {
+                            fail("AUTH_FAILED: $info".trim(':', ' '))
+                        }
                     }
                     "CONNECTION_TIMEOUT", "CERT_VERIFY_FAIL", "TLS_VERSION_MIN", "CLIENT_HALT", "TUN_SETUP_FAILED",
-                    "PROXY_NEED_CREDS", "NEED_CREDS", "DYNAMIC_CHALLENGE" -> fail("$name $info".trim())
+                    "PROXY_NEED_CREDS", "NEED_CREDS", "DYNAMIC_CHALLENGE" -> if (!retryLogin) fail("$name $info".trim())
                 }
             }
 
@@ -145,16 +170,16 @@ class OpenVpnService : VpnService() {
             val error = e.configure(config.ovpnConfig.orEmpty(), config.username, config.password)
             if (error != null) {
                 fail(error)
-                return
+                return false
             }
             val result = e.run()
+            if (retryLogin) return true
             if (!stopping.get() && result != null) fail(result)
         } catch (t: Throwable) {
             LogUtil.e(AppConfig.TAG, "OpenVPN session crashed", t)
             fail(t.message ?: t.javaClass.simpleName)
-        } finally {
-            if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
         }
+        return false
     }
 
     /** "Test" while connected: time of a small HTTP request that goes through the tunnel. */
