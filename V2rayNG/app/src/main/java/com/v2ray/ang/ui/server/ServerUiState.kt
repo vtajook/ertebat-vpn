@@ -140,14 +140,14 @@ class ServerUiState(
                 else -> null
             },
             flow = if (isVless) flow else null,
-            username = if (isSocksOrHttp || isSsh || configType == EConfigType.OPENVPN || configType == EConfigType.ANYCONNECT) username else null,
+            username = if (isSocksOrHttp || isSsh || configType == EConfigType.OPENVPN || configType == EConfigType.ANYCONNECT || configType == EConfigType.L2TP) username else null,
             secretKey = if (isWireguard) secretKey else null,
             publicKey = when {
                 isWireguard -> publicKey
                 streamSecurity == REALITY -> publicKeyReality
                 else -> null
             },
-            preSharedKey = if (isWireguard) preSharedKey else null,
+            preSharedKey = if (isWireguard || configType == EConfigType.L2TP) preSharedKey else null,
             reserved = if (isWireguard) reserved else null,
             localAddress = if (isWireguard) localAddress else null,
             mtu = if (isWireguard) mtu.toIntOrNull() else null,

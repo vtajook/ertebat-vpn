@@ -26,6 +26,7 @@ private enum class ImportMenuAction(@StringRes val labelRes: Int, val action: Ma
     Ssh(R.string.menu_item_import_config_manually_ssh, MainAction.ImportManually(EConfigType.SSH.value)),
     OpenVpn(R.string.menu_item_import_config_manually_openvpn, MainAction.ImportManually(EConfigType.OPENVPN.value)),
     Cisco(R.string.menu_item_import_config_manually_cisco, MainAction.ImportManually(EConfigType.ANYCONNECT.value)),
+    L2tp(R.string.menu_item_import_config_manually_l2tp, MainAction.ImportManually(EConfigType.L2TP.value)),
     Hysteria2(R.string.menu_item_import_config_manually_hysteria2, MainAction.ImportManually(EConfigType.HYSTERIA2.value))
 }
 

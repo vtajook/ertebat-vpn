@@ -222,6 +222,7 @@ object AppConfig {
     const val SSH = "ssh://"
     const val OPENVPN = "openvpn://"
     const val ANYCONNECT = "anyconnect://"
+    const val L2TP = "l2tp://"
     const val TUIC = "tuic://"
     const val HYSTERIA = "hysteria://"
     const val HYSTERIA2 = "hysteria2://"

@@ -1,0 +1,52 @@
+package com.v2ray.ang.ui.server
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.res.stringResource
+import com.v2ray.ang.R
+import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.ui.compose.FormTextField
+
+/** Editor for L2TP/IPsec profiles: server, user name, password and the IPsec pre-shared key (secret). */
+class ServerL2tpActivity : BaseServerActivity() {
+
+    override val serverConfigType: EConfigType = EConfigType.L2TP
+
+    @Composable
+    override fun ScreenContent() {
+        val uiState = rememberSaveable(saver = ServerUiState.Saver) {
+            ServerUiState.from(initialConfig = initialConfig)
+        }.apply {
+            configType = serverConfigType
+        }
+
+        ServerEditorScaffold(
+            title = serverConfigType.toString(),
+            onSaveClick = { saveServer(uiState) }
+        ) {
+            CommonBasicFields(uiState)
+            FormTextField(
+                stringResource(R.string.server_lab_username),
+                uiState.username,
+                { uiState.username = it }
+            )
+            FormTextField(
+                stringResource(R.string.server_lab_password),
+                uiState.password,
+                { uiState.password = it },
+                isError = uiState.isPasswordError
+            )
+            FormTextField(
+                stringResource(R.string.server_lab_l2tp_psk),
+                uiState.preSharedKey,
+                { uiState.preSharedKey = it }
+            )
+        }
+    }
+
+    override fun validateProtocolConfig(config: ProfileItem): Boolean {
+        // user name and password may be left empty (some servers ask for neither or only one)
+        return true
+    }
+}

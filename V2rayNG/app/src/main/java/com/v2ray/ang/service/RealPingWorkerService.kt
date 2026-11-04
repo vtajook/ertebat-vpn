@@ -117,6 +117,10 @@ class RealPingWorkerService(
             val udp = when (config.ovpnProto) { "udp", "both" -> true; "tcp" -> false; else -> config.mode == "udp" }
             return if (udp) OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
+        if (config.configType == EConfigType.L2TP) {
+            // L2TP/IPsec is UDP only (IKE): there is nothing to connect to, so report a nominal value
+            return if (config.server.isNullOrBlank()) retFailure else 1L
+        }
         if (config.configType == EConfigType.ANYCONNECT) {
             // AnyConnect is not an Xray outbound: the reachability of the HTTPS port is what can be measured
             val port = config.serverPort?.toIntOrNull() ?: 443

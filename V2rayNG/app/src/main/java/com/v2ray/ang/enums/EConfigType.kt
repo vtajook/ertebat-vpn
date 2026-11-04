@@ -13,6 +13,7 @@ enum class EConfigType(val value: Int, val protocolScheme: String) {
     SSH(11, AppConfig.SSH),
     OPENVPN(12, AppConfig.OPENVPN),
     ANYCONNECT(13, AppConfig.ANYCONNECT),
+    L2TP(14, AppConfig.L2TP),
 
     //    TUIC(8, AppConfig.TUIC),
     HYSTERIA2(9, AppConfig.HYSTERIA2),

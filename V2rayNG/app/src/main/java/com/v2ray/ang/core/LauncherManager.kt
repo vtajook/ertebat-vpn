@@ -17,6 +17,7 @@ import com.v2ray.ang.service.CoreProxyOnlyService
 import com.v2ray.ang.service.CoreRootService
 import com.v2ray.ang.service.CoreVpnService
 import com.v2ray.ang.service.CiscoService
+import com.v2ray.ang.service.L2tpService
 import com.v2ray.ang.service.OpenVpnService
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.util.LogUtil
@@ -115,7 +116,10 @@ object LauncherManager {
             error(context.getString(R.string.toast_root_required))
         }
 
-        val intent = if (config.configType == EConfigType.ANYCONNECT) {
+        val intent = if (config.configType == EConfigType.L2TP) {
+            LogUtil.i(AppConfig.TAG, "LauncherManager: Starting L2TP/IPsec service")
+            Intent(context.applicationContext, L2tpService::class.java)
+        } else if (config.configType == EConfigType.ANYCONNECT) {
             // Cisco AnyConnect has its own engine and VPN service too
             LogUtil.i(AppConfig.TAG, "LauncherManager: Starting Cisco AnyConnect service")
             Intent(context.applicationContext, CiscoService::class.java)

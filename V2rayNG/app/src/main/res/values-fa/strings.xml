@@ -585,4 +585,6 @@
     <string name="server_lab_password">رمز عبور</string>
     <string name="server_lab_ovpn_config">کانفیگ OpenVPN (فایل ovpn)</string>
     <string name="toast_openvpn_config_invalid">کانفیگ OpenVPN معتبر نیست: خط remote لازم است</string>
+    <string name="menu_item_import_config_manually_l2tp">افزودن [L2TP/IPsec]</string>
+    <string name="server_lab_l2tp_psk">کلید مشترک IPsec (Secret)</string>
 </resources>

@@ -41,6 +41,7 @@ import com.v2ray.ang.ui.server.ServerProxyChainActivity
 import com.v2ray.ang.ui.server.ServerShadowsocksActivity
 import com.v2ray.ang.ui.server.ServerSocksActivity
 import com.v2ray.ang.ui.server.ServerCiscoActivity
+import com.v2ray.ang.ui.server.ServerL2tpActivity
 import com.v2ray.ang.ui.server.ServerOpenVpnActivity
 import com.v2ray.ang.ui.server.ServerSshActivity
 import com.v2ray.ang.ui.server.ServerTrojanActivity
@@ -181,7 +182,7 @@ class MainActivity : HelperBaseComponentActivity() {
     private fun requestServiceStart() {
         // OpenVPN profiles always need the system VPN permission, whatever run mode is set
         val selectedType = MmkvManager.getSelectServer()?.let { MmkvManager.decodeServerConfig(it)?.configType }
-        if (!SettingsManager.isVpnMode() && selectedType != EConfigType.OPENVPN && selectedType != EConfigType.ANYCONNECT) {
+        if (!SettingsManager.isVpnMode() && selectedType != EConfigType.OPENVPN && selectedType != EConfigType.ANYCONNECT && selectedType != EConfigType.L2TP) {
             startV2Ray()
             return
         }
@@ -221,6 +222,7 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.SSH.value -> Intent(this, ServerSshActivity::class.java)
             EConfigType.OPENVPN.value -> Intent(this, ServerOpenVpnActivity::class.java)
             EConfigType.ANYCONNECT.value -> Intent(this, ServerCiscoActivity::class.java)
+            EConfigType.L2TP.value -> Intent(this, ServerL2tpActivity::class.java)
             EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
                 putExtra("createConfigType", createConfigType)
@@ -276,6 +278,7 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.SSH -> ServerSshActivity::class.java
             EConfigType.OPENVPN -> ServerOpenVpnActivity::class.java
             EConfigType.ANYCONNECT -> ServerCiscoActivity::class.java
+            EConfigType.L2TP -> ServerL2tpActivity::class.java
             EConfigType.HYSTERIA2 -> ServerHysteria2Activity::class.java
             else -> ServerHttpActivity::class.java
         }

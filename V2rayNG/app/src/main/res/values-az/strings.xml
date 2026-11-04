@@ -586,4 +586,6 @@
     <string name="server_lab_password">Password</string>
     <string name="server_lab_ovpn_config">OpenVPN config (.ovpn)</string>
     <string name="toast_openvpn_config_invalid">The OpenVPN config is invalid: a "remote" line is required</string>
+    <string name="menu_item_import_config_manually_l2tp">Add [L2TP/IPsec]</string>
+    <string name="server_lab_l2tp_psk">IPsec pre-shared key (secret)</string>
 </resources>
