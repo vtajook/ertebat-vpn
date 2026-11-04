@@ -39,6 +39,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // OpenVPN 3 core (libovpn3.so), see src/main/cpp/CMakeLists.txt
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
     // Test builds from CI are signed with this fixed key so every build can be installed over the
     // previous one. The key is public (it lives in the repository): it is for testing only. Releases
     // for customers must be signed through the APP_KEYSTORE_* secrets, see the workflow.

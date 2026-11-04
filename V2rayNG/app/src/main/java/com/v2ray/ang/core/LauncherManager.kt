@@ -16,6 +16,8 @@ import com.v2ray.ang.root.RootManager
 import com.v2ray.ang.service.CoreProxyOnlyService
 import com.v2ray.ang.service.CoreRootService
 import com.v2ray.ang.service.CoreVpnService
+import com.v2ray.ang.service.OpenVpnService
+import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.Utils
 
@@ -112,7 +114,11 @@ object LauncherManager {
             error(context.getString(R.string.toast_root_required))
         }
 
-        val intent = if (isRootMode) {
+        val intent = if (config.configType == EConfigType.OPENVPN) {
+            // OpenVPN has its own engine and VPN service, it never goes through the Xray core
+            LogUtil.i(AppConfig.TAG, "LauncherManager: Starting OpenVPN service")
+            Intent(context.applicationContext, OpenVpnService::class.java)
+        } else if (isRootMode) {
             LogUtil.i(AppConfig.TAG, "LauncherManager: Starting Root service")
             Intent(context.applicationContext, CoreRootService::class.java)
         } else if (SettingsManager.isVpnMode()) {

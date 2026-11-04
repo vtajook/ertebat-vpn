@@ -11,6 +11,7 @@ enum class EConfigType(val value: Int, val protocolScheme: String) {
     TROJAN(6, AppConfig.TROJAN),
     WIREGUARD(7, AppConfig.WIREGUARD),
     SSH(11, AppConfig.SSH),
+    OPENVPN(12, AppConfig.OPENVPN),
 
     //    TUIC(8, AppConfig.TUIC),
     HYSTERIA2(9, AppConfig.HYSTERIA2),

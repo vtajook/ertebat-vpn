@@ -74,6 +74,9 @@ data class ProfileItem(
     var proxyChainProfiles: String? = null,
 
     var browserDialerMode: String? = null,
+
+    /** Full `.ovpn` file of an OpenVPN profile (certificates and keys inline); stored encrypted. */
+    var ovpnConfig: String? = null,
 ) {
 
     companion object {

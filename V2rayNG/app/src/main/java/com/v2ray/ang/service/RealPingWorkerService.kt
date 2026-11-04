@@ -108,6 +108,12 @@ class RealPingWorkerService(
         val retFailure = -1L
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
+        if (config.configType == EConfigType.OPENVPN) {
+            // OpenVPN is not an Xray outbound: only the reachability of the server can be measured. UDP
+            // servers cannot be probed by connecting, so they report a nominal value instead.
+            val port = config.serverPort?.toIntOrNull() ?: return retFailure
+            return if (config.mode == "udp") 1L else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
+        }
         if (config.configType == EConfigType.SSH) {
             // An SSH profile can only be tunnelled while it is connected, so "ping" is the TCP connect time.
             val sshPort = config.serverPort?.toIntOrNull() ?: return retFailure
@@ -153,6 +159,7 @@ class RealPingWorkerService(
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD
+            && !(config.configType == EConfigType.OPENVPN && config.mode == "udp")
             && config.alpn?.split(',')?.all { it.trim().startsWith("h3") } != true
             && config.server.isNotNullEmpty()
             && config.serverPort?.toIntOrNull() != null

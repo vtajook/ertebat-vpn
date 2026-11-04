@@ -43,6 +43,15 @@ jobs:
         \
             ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
 
+    - name: Install CMake and SWIG (OpenVPN 3 engine)
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "cmake;3.22.1"
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq swig
+
+    - name: Generate OpenVPN 3 bindings
+      run: bash scripts/gen-ovpn3-swig.sh
+
     - name: Restore cached libhevtun
       id: cache-libhevtun-restore
       uses: actions/cache/restore@v6

@@ -24,6 +24,7 @@ private enum class ImportMenuAction(@StringRes val labelRes: Int, val action: Ma
     Trojan(R.string.menu_item_import_config_manually_trojan, MainAction.ImportManually(EConfigType.TROJAN.value)),
     WireGuard(R.string.menu_item_import_config_manually_wireguard, MainAction.ImportManually(EConfigType.WIREGUARD.value)),
     Ssh(R.string.menu_item_import_config_manually_ssh, MainAction.ImportManually(EConfigType.SSH.value)),
+    OpenVpn(R.string.menu_item_import_config_manually_openvpn, MainAction.ImportManually(EConfigType.OPENVPN.value)),
     Hysteria2(R.string.menu_item_import_config_manually_hysteria2, MainAction.ImportManually(EConfigType.HYSTERIA2.value))
 }
 

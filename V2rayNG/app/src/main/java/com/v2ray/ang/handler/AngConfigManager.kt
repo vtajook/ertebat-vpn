@@ -16,6 +16,7 @@ import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.fmt.CustomFmt
 import com.v2ray.ang.fmt.Hysteria2Fmt
 import com.v2ray.ang.fmt.ShadowsocksFmt
+import com.v2ray.ang.fmt.OpenVpnFmt
 import com.v2ray.ang.fmt.SshFmt
 import com.v2ray.ang.fmt.SocksFmt
 import com.v2ray.ang.fmt.TrojanFmt
@@ -389,6 +390,23 @@ object AngConfigManager {
                 throw e
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "Failed to parse WireGuard config file", e)
+            }
+            return 0
+        } else if (OpenVpnFmt.looksLikeOvpn(server)) {
+            try {
+                val config = OpenVpnFmt.parseOvpn(server) ?: return 0
+                config.subscriptionId = subid
+                config.description = generateDescription(config)
+                commitProfiles(
+                    configs = listOf(ParsedProfile(config, server)),
+                    subid = subid,
+                    append = append,
+                )
+                return 1
+            } catch (e: ProfileStorageException) {
+                throw e
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Failed to parse OpenVPN config file", e)
             }
             return 0
         } else {
