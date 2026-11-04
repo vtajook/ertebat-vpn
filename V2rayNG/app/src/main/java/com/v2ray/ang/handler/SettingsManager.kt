@@ -52,7 +52,9 @@ object SettingsManager {
     private fun initRoutingRulesets(context: Context) {
         val exist = MmkvManager.decodeRoutingRulesets()
         if (exist.isNullOrEmpty()) {
-            val rulesetList = getPresetRoutingRulesets(context)
+            // EGN VPN is made for Iranian customers: the Iran bypass preset is the default
+            val rulesetList = getPresetRoutingRulesets(context, RoutingType.WHITE_IRAN)
+                ?: getPresetRoutingRulesets(context)
             MmkvManager.encodeRoutingRulesets(rulesetList)
         }
     }
