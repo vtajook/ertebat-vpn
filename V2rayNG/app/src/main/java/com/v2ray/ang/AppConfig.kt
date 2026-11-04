@@ -136,6 +136,9 @@ object AppConfig {
     const val TG_BOT_URL = "https://t.me/egnvpnbot"
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
+
+    /** Test URL with an IP instead of a domain: a WireGuard outbound often cannot resolve names for the probe. */
+    const val DELAY_TEST_URL_IP = "https://1.1.1.1/cdn-cgi/trace"
     const val OBSERVATORY_LEAST_PING_INTERVAL = "3m"
     const val OBSERVATORY_LEAST_LOAD_INTERVAL = "5m"
     const val OBSERVATORY_LEAST_LOAD_METHOD = "HEAD"

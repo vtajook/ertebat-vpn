@@ -90,7 +90,7 @@ fun MainDrawerContent(drawerState: DrawerState, onNavigate: (MainDestination) ->
                     .height(200.dp)
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color(0xFF0D47A1), Color(0xFF1976D2))
+                            listOf(Color(0xFF000000), Color(0xFFB71C1C))
                         )
                     )
                     .padding(16.dp),

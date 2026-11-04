@@ -1,5 +1,12 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.MaterialTheme
+import com.v2ray.ang.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -150,6 +157,14 @@ fun MainScreen(
         }
     ) {
         Scaffold(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .paint(
+                    painter = painterResource(R.drawable.bg_watermark),
+                    contentScale = ContentScale.Fit,
+                    alpha = 0.07f
+                ),
+            containerColor = Color.Transparent,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
                 MainTopBar(
