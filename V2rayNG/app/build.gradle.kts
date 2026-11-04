@@ -88,6 +88,9 @@ android {
     sourceSets {
         getByName("main") {
             jniLibs.srcDirs("libs")
+            // Java side of libopenconnect (Cisco AnyConnect), LGPL-2.1; its sample app is left out
+            java.srcDir("../../third_party/openconnect/java/src")
+            java.exclude("com/example/**")
         }
     }
 

@@ -116,6 +116,11 @@ class RealPingWorkerService(
             val port = config.serverPort?.toIntOrNull() ?: return retFailure
             return if (config.mode == "udp") OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
+        if (config.configType == EConfigType.ANYCONNECT) {
+            // AnyConnect is not an Xray outbound: the reachability of the HTTPS port is what can be measured
+            val port = config.serverPort?.toIntOrNull() ?: 443
+            return SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
+        }
         if (config.configType == EConfigType.SSH) {
             // An SSH profile can only be tunnelled while it is connected, so "ping" is the TCP connect time.
             val sshPort = config.serverPort?.toIntOrNull() ?: return retFailure

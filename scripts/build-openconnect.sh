@@ -65,7 +65,7 @@ build_abi() {
   (cd "$WORK/oc-$abi" &&
     OPENSSL_CFLAGS="-I$P/include" OPENSSL_LIBS="$SSLLIB/libssl.a $SSLLIB/libcrypto.a -ldl -lz" \
     LIBXML2_CFLAGS="-I$P/include/libxml2 -DLIBXML_STATIC" LIBXML2_LIBS="$P/lib/libxml2.a -lz -lm" \
-    CFLAGS="-O2 -fPIC -Wno-deprecated-declarations" \
+    CFLAGS="-O2 -fPIC -Wno-deprecated-declarations -I$JNI_INC/linux" \
     "$WORK/oc-src/configure" --host="$host" --prefix="$P/oc" \
       --enable-shared --disable-static --enable-jni-standalone --with-java="$JNI_INC" \
       --with-openssl --without-gnutls --without-lz4 --without-stoken --without-libproxy --without-libpcsclite \

@@ -140,7 +140,7 @@ class ServerUiState(
                 else -> null
             },
             flow = if (isVless) flow else null,
-            username = if (isSocksOrHttp || isSsh || configType == EConfigType.OPENVPN) username else null,
+            username = if (isSocksOrHttp || isSsh || configType == EConfigType.OPENVPN || configType == EConfigType.ANYCONNECT) username else null,
             secretKey = if (isWireguard) secretKey else null,
             publicKey = when {
                 isWireguard -> publicKey

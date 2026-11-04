@@ -16,6 +16,7 @@ import com.v2ray.ang.root.RootManager
 import com.v2ray.ang.service.CoreProxyOnlyService
 import com.v2ray.ang.service.CoreRootService
 import com.v2ray.ang.service.CoreVpnService
+import com.v2ray.ang.service.CiscoService
 import com.v2ray.ang.service.OpenVpnService
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.util.LogUtil
@@ -114,7 +115,11 @@ object LauncherManager {
             error(context.getString(R.string.toast_root_required))
         }
 
-        val intent = if (config.configType == EConfigType.OPENVPN) {
+        val intent = if (config.configType == EConfigType.ANYCONNECT) {
+            // Cisco AnyConnect has its own engine and VPN service too
+            LogUtil.i(AppConfig.TAG, "LauncherManager: Starting Cisco AnyConnect service")
+            Intent(context.applicationContext, CiscoService::class.java)
+        } else if (config.configType == EConfigType.OPENVPN) {
             // OpenVPN has its own engine and VPN service, it never goes through the Xray core
             LogUtil.i(AppConfig.TAG, "LauncherManager: Starting OpenVPN service")
             Intent(context.applicationContext, OpenVpnService::class.java)

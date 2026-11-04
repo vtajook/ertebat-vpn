@@ -221,6 +221,7 @@ object AppConfig {
     const val WIREGUARD = "wireguard://"
     const val SSH = "ssh://"
     const val OPENVPN = "openvpn://"
+    const val ANYCONNECT = "anyconnect://"
     const val TUIC = "tuic://"
     const val HYSTERIA = "hysteria://"
     const val HYSTERIA2 = "hysteria2://"

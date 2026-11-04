@@ -576,6 +576,8 @@
     <string name="title_tg_bot">ربات تلگرام (@egnvpnbot)</string>
     <string name="drawer_brand_tagline">ارتباط گستر</string>
     <string name="menu_item_import_config_manually_openvpn">افزودن [OpenVPN]</string>
+    <string name="menu_item_import_config_manually_cisco">افزودن [Cisco AnyConnect]</string>
+    <string name="server_lab_cisco_group">گروه (اختیاری)</string>
     <string name="server_lab_ovpn_config">کانفیگ OpenVPN (فایل ovpn)</string>
     <string name="toast_openvpn_config_invalid">کانفیگ OpenVPN معتبر نیست: خط remote لازم است</string>
 </resources>
