@@ -144,10 +144,17 @@ jobs:
         if-no-files-found: error
 
     - name: Publish GitHub release
-      if: github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && steps.signing.outputs.has_keystore == 'true'
+      if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release create "${{ inputs.release_tag }}" \
-          ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*.apk \
-          --title "${{ inputs.release_tag }}" --generate-notes
+        APK_DIR=${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore
+        if [ "${{ steps.signing.outputs.has_keystore }}" = "true" ]; then
+          gh release create "${{ inputs.release_tag }}" $APK_DIR/release/*.apk \
+            --title "${{ inputs.release_tag }}" --generate-notes
+        else
+          # no keystore secrets: debug-signed build, published as a pre-release for testing only
+          gh release create "${{ inputs.release_tag }}" $APK_DIR/debug/*.apk \
+            --title "${{ inputs.release_tag }} (test build)" --prerelease \
+            --notes "Debug-signed test build. Add the keystore secrets for release-signed builds."
+        fi
