@@ -49,7 +49,8 @@ target_compile_definitions(ovpn3 PRIVATE
     USE_ASIO
     OPENVPN_PLATFORM_ANDROID
     OPENVPN_CORE_GIT_VERSION="${OPENVPN3_GIT}"
-    OPENVPN_ALLOW_INSECURE_CERTPROFILE
-    OPENVPN_DISABLE_MBEDTLS_PLATFORM_ENTROPY_POLL)
+    OPENVPN_ALLOW_INSECURE_CERTPROFILE)
+
+target_compile_options(ovpn3 PRIVATE -include ${CMAKE_CURRENT_LIST_DIR}/shim/mbedtls_entropy_shim.h)
 
 target_link_libraries(ovpn3 mbedtls mbedx509 mbedcrypto lz4 fmt log)
