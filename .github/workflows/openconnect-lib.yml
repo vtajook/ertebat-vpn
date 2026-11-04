@@ -1,0 +1,30 @@
+name: Build OpenConnect lib (test)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  lib:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: 'recursive'
+    - uses: actions/setup-java@v6.1.0
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        log-accepted-android-sdk-licenses: false
+        cmdline-tools-version: '14742923'
+        packages: 'platform-tools'
+    - name: Install NDK and tools
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.14206865"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq autoconf automake libtool pkg-config cmake make
+    - name: Build libopenconnect
+      run: bash scripts/build-openconnect.sh
