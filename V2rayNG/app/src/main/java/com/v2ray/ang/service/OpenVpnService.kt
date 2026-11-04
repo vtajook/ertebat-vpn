@@ -19,7 +19,10 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.LauncherManager
 import com.v2ray.ang.core.ovpn.OpenVpnEngine
+import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.TrafficSnapshot
+import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.handler.SpeedtestManager
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.handler.AppLocaleManager
 import com.v2ray.ang.handler.MmkvManager
@@ -63,6 +66,11 @@ class OpenVpnService : VpnService() {
                 )
 
                 AppConfig.MSG_STATE_STOP -> stopVpn()
+
+                AppConfig.MSG_MEASURE_DELAY -> {
+                    if (isOrderedBroadcast) resultCode = Activity.RESULT_OK
+                    measureDelay(intent.getStringExtra("content").orEmpty())
+                }
 
                 AppConfig.MSG_STATE_RESTART -> {
                     if (isOrderedBroadcast) resultCode = Activity.RESULT_OK
@@ -147,6 +155,52 @@ class OpenVpnService : VpnService() {
         } finally {
             if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
         }
+    }
+
+    /** "Test" while connected: time of a small HTTP request that goes through the tunnel. */
+    private fun measureDelay(requestId: String) {
+        if (!connected) {
+            MessageHelper.sendMsg2UI(this, AppConfig.MSG_MEASURE_DELAY_CANCEL, "", requestId)
+            return
+        }
+        Thread({
+            var time = -1L
+            var error = ""
+            for (url in listOf(SettingsManager.getDelayTestUrl(), SettingsManager.getDelayTestUrl(true))) {
+                try {
+                    val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 8000
+                    conn.readTimeout = 8000
+                    conn.instanceFollowRedirects = false
+                    conn.useCaches = false
+                    val start = System.nanoTime()
+                    val code = conn.responseCode
+                    val elapsed = (System.nanoTime() - start) / 1_000_000
+                    conn.disconnect()
+                    if (code in 200..399) {
+                        time = elapsed
+                        error = ""
+                        break
+                    }
+                    error = "HTTP $code"
+                } catch (e: Exception) {
+                    error = e.message ?: e.javaClass.simpleName
+                }
+            }
+            val endpoint = if (time >= 0) SpeedtestManager.getRemoteIPInfo() else null
+            val result = ConnectionTestResult(
+                delayMillis = time,
+                errorMessage = error,
+                country = endpoint?.country,
+                ipAddress = endpoint?.ipAddress,
+            )
+            MessageHelper.sendMsg2UI(
+                this,
+                if (connected) AppConfig.MSG_MEASURE_DELAY_RESULT else AppConfig.MSG_MEASURE_DELAY_CANCEL,
+                if (connected) result else "",
+                requestId
+            )
+        }, "ovpn-delay").start()
     }
 
     private fun onConnected() {

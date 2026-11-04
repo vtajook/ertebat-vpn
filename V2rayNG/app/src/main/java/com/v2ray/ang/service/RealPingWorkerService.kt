@@ -113,7 +113,7 @@ class RealPingWorkerService(
             // OpenVPN is not an Xray outbound: only the reachability of the server can be measured. UDP
             // servers cannot be probed by connecting, so they report a nominal value instead.
             val port = config.serverPort?.toIntOrNull() ?: return retFailure
-            return if (config.mode == "udp") 1L else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
+            return if (config.mode == "udp") icmpPing(config.server.orEmpty()) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
         if (config.configType == EConfigType.SSH) {
             // An SSH profile can only be tunnelled while it is connected, so "ping" is the TCP connect time.
@@ -156,10 +156,30 @@ class RealPingWorkerService(
         }
     }
 
+    /**
+     * Round-trip time of one ICMP echo, in milliseconds, or -1 when the host does not answer.
+     * UDP-only servers (OpenVPN over UDP) cannot be probed by connecting, so this is the best estimate.
+     */
+    private fun icmpPing(host: String): Long {
+        if (host.isBlank()) return -1L
+        return try {
+            val process = ProcessBuilder("ping", "-c", "1", "-W", "2", host).redirectErrorStream(true).start()
+            val output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+            Regex("""time[=<]([0-9.]+)""").find(output)?.groupValues?.get(1)?.toDoubleOrNull()
+                ?.let { Math.max(1L, Math.round(it)) } ?: -1L
+        } catch (_: Exception) {
+            -1L
+        }
+    }
+
     private fun startTcping(guid: String): Long {
         val retFailure = -1L
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
+        if (config.configType == EConfigType.OPENVPN && config.mode == "udp") {
+            return icmpPing(config.server.orEmpty())
+        }
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD
