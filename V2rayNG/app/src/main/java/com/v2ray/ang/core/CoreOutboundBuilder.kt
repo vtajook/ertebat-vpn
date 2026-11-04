@@ -299,7 +299,9 @@ object CoreOutboundBuilder {
                 peer.preSharedKey = profileItem.preSharedKey?.nullIfBlank()
                 peer.endpoint = Utils.getIpv6Address(profileItem.server) + ":${profileItem.serverPort}"
             }
-            wireguard.mtu = profileItem.mtu
+            // Mobile paths often carry less than 1420 bytes: with a larger WireGuard MTU small messages
+            // (chat) work while big TLS handshakes/images silently vanish. Cap it at the safe 1280.
+            wireguard.mtu = (profileItem.mtu ?: AppConfig.WIREGUARD_SAFE_MTU).coerceAtMost(AppConfig.WIREGUARD_SAFE_MTU)
             wireguard.remoteDNS = remotes
             wireguard.reserved = profileItem.reserved?.takeIf { it.isNotBlank() }?.split(",")?.filter { it.isNotBlank() }?.map { it.trim().toInt() }
         }

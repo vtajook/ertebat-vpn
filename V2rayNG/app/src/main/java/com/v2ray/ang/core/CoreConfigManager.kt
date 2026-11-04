@@ -468,7 +468,11 @@ object CoreConfigManager {
         v2rayConfig.log.loglevel = MmkvManager.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
         v2rayConfig.inbounds.clear()
         v2rayConfig.routing.rules.clear()
-        v2rayConfig.dns = null
+        // The test URL is a domain. A WireGuard outbound cannot use the (blocked/poisoned) system
+        // resolver outside the tunnel, so give the probe a plain IP DNS that is reached through it.
+        v2rayConfig.dns = if (v2rayConfig.outbounds.any { it.protocol.equals(EConfigType.WIREGUARD.name, true) }) {
+            V2rayConfig.DnsBean(servers = arrayListOf("1.1.1.1", "8.8.8.8"), queryStrategy = "UseIPv4")
+        } else null
         v2rayConfig.fakedns = null
         v2rayConfig.stats = null
         v2rayConfig.policy = null
@@ -739,10 +743,9 @@ object CoreConfigManager {
      * Remove speed-test runtime sections when the feature is disabled.
      */
     private fun applySpeedDisabled(v2rayConfig: V2rayConfig) {
-        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED) != true) {
-            v2rayConfig.stats = null
-            v2rayConfig.policy?.system = null
-        }
+        // EGN VPN always needs the outbound traffic counters: the main screen shows live speed and
+        // data used. The notification speed text stays optional (PREF_SPEED_ENABLED) and is handled
+        // by the notification code, so the stats module is never switched off here.
     }
 
     /*

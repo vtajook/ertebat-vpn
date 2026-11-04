@@ -165,7 +165,8 @@ object AppConfig {
     const val PORT_SOCKS = "10808"
     const val WIREGUARD_LOCAL_ADDRESS_V4 = "172.16.0.2/32"
     const val WIREGUARD_LOCAL_ADDRESS_V6 = "2606:4700:110:8f81:d551:a0:532e:a2b3/128"
-    const val WIREGUARD_LOCAL_MTU = "1420"
+    const val WIREGUARD_LOCAL_MTU = "1280"
+    const val WIREGUARD_SAFE_MTU = 1280
     const val WIREGUARD_LOCAL_REMOTE_DNS = "1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001"
     const val LOOPBACK = "127.0.0.1"
 
