@@ -90,7 +90,6 @@ android {
             jniLibs.srcDirs("libs")
             // Java side of libopenconnect (Cisco AnyConnect), LGPL-2.1; its sample app is left out
             java.srcDir("../../third_party/openconnect/java/src")
-            java.exclude("com/example/**")
         }
     }
 
@@ -267,4 +266,9 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+}
+
+// the sample app that ships in libopenconnect's Java folder is not part of EGN VPN
+tasks.withType<JavaCompile>().configureEach {
+    exclude("com/example/**")
 }
