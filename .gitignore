@@ -1,0 +1,15 @@
+*.dat
+*.jks
+*.keystore
+.idea/
+.gradle/
+*.iml
+/local.properties
+.DS_Store
+/build
+/captures
+V2rayNG/app/build
+V2rayNG/app/release/output.json
+V2rayNG/app/libs/
+V2rayNG/app/libs
+V2rayNG/local.properties
