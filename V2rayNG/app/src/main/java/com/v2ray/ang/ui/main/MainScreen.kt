@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.paint
@@ -159,15 +160,12 @@ fun MainScreen(
     ) {
         Scaffold(
             modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF4A0F14), MaterialTheme.colorScheme.background)
-                    )
-                )
+                .background(MaterialTheme.colorScheme.background)
                 .paint(
                     painter = painterResource(R.drawable.bg_watermark),
                     contentScale = ContentScale.Fit,
-                    alpha = 0.22f
+                    alpha = 0.10f,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                 ),
             containerColor = Color.Transparent,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,

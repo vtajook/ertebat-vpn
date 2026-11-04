@@ -4,6 +4,7 @@ import android.content.Context
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.core.CoreConfigManager
 import com.v2ray.ang.core.CoreNativeManager
+import com.v2ray.ang.core.ovpn.OpenVpnProbe
 import com.v2ray.ang.dto.RealPingEvent
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.isComplexType
@@ -113,7 +114,7 @@ class RealPingWorkerService(
             // OpenVPN is not an Xray outbound: only the reachability of the server can be measured. UDP
             // servers cannot be probed by connecting, so they report a nominal value instead.
             val port = config.serverPort?.toIntOrNull() ?: return retFailure
-            return if (config.mode == "udp") icmpPing(config.server.orEmpty()) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
+            return if (config.mode == "udp") OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
         if (config.configType == EConfigType.SSH) {
             // An SSH profile can only be tunnelled while it is connected, so "ping" is the TCP connect time.
@@ -140,10 +141,7 @@ class RealPingWorkerService(
             return retFailure
         }
         return RealPingExecutionLimiter.run(config.configType) {
-            var delay = if (config.configType == EConfigType.WIREGUARD) {
-                CoreNativeManager.measureOutboundDelay(configResult.content, AppConfig.DELAY_TEST_URL_IP)
-            } else -1L
-            if (delay < 0) delay = CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+            var delay = CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
             if (delay < 0 && config.configType == EConfigType.WIREGUARD) {
                 // WireGuard needs a UDP handshake (and a DNS lookup through the tunnel) before the first
                 // byte flows, so the first probe often times out: try again, then with the second URL.
@@ -178,7 +176,7 @@ class RealPingWorkerService(
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
         if (config.configType == EConfigType.OPENVPN && config.mode == "udp") {
-            return icmpPing(config.server.orEmpty())
+            return OpenVpnProbe.measure(config)
         }
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2

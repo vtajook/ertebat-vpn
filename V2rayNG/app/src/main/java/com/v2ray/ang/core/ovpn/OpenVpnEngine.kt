@@ -24,7 +24,7 @@ import java.net.InetAddress
  * [connect] blocks until the session ends, so it must run on a worker thread.
  */
 class OpenVpnEngine(
-    private val service: VpnService,
+    private val service: VpnService?,
     private val listener: Listener,
 ) : ClientAPI_OpenVPNClient() {
 
@@ -73,7 +73,7 @@ class OpenVpnEngine(
     // ── tun builder ────────────────────────────────────────────────────────────────────────────
 
     override fun tun_builder_new(): Boolean {
-        builder = service.Builder().setBlocking(false)
+        builder = service?.Builder()?.setBlocking(false)
         dnsAdded = false
         return true
     }
@@ -137,6 +137,7 @@ class OpenVpnEngine(
     override fun tun_builder_teardown(disconnect: Boolean) {}
 
     override fun tun_builder_establish(): Int {
+        // no service = latency probe: the tunnel is never brought up
         val b = builder ?: return -1
         return try {
             if (!dnsAdded) {
@@ -153,7 +154,7 @@ class OpenVpnEngine(
         }
     }
 
-    override fun socket_protect(socket: Int, remote: String, ipv6: Boolean): Boolean = service.protect(socket)
+    override fun socket_protect(socket: Int, remote: String, ipv6: Boolean): Boolean = service?.protect(socket) ?: true
 
     // ── core callbacks ─────────────────────────────────────────────────────────────────────────
 

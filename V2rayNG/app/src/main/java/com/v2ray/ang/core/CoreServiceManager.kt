@@ -348,20 +348,11 @@ object CoreServiceManager {
             var time = -1L
             var errorStr = ""
 
-            if (currentConfig?.configType == EConfigType.WIREGUARD) {
-                try {
-                    time = coreController.measureDelay(AppConfig.DELAY_TEST_URL_IP)
-                } catch (e: Exception) {
-                    LogUtil.e(AppConfig.TAG, "StartCore-Manager: WireGuard IP delay probe failed", e)
-                }
-            }
-            if (time == -1L) {
-                try {
-                    time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
-                } catch (e: Exception) {
-                    LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to measure delay", e)
-                    errorStr = e.message?.substringAfter("\":").orEmpty()
-                }
+            try {
+                time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to measure delay", e)
+                errorStr = e.message?.substringAfter("\":").orEmpty()
             }
             if (time == -1L) {
                 ensureActive()

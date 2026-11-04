@@ -1,7 +1,7 @@
 import sys
 from PIL import Image, ImageDraw
 
-BLUE=(10,10,10,255); CYAN=(229,57,53,255); WHITE=(255,255,255,255)
+BLUE=(13,71,161,255); CYAN=(0,172,193,255); WHITE=(255,255,255,255)
 
 def bez(p0,p1,p2,n=24):
     pts=[]
