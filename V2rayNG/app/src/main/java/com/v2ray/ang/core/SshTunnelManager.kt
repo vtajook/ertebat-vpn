@@ -270,8 +270,10 @@ object SshTunnelManager {
             val channelOut = ch.outputStream
             val closer = { closeQuietly(sock, ch) }
 
-            // client -> ssh on a worker thread, ssh -> client right here
-            executor.execute { pump(input, channelOut, closer) }
+            // client -> ssh on a worker thread, ssh -> client right here. When the client only finishes
+            // sending (half-close, e.g. after an upload) the SSH channel gets an EOF but stays open, so
+            // the server's answer can still arrive; any other end closes the pair.
+            executor.execute { pump(input, channelOut, closer, onEof = { runCatching { channelOut.close() } }) }
             pump(channelIn, output, closer)
         } catch (_: EOFException) {
             // client went away during the handshake
@@ -282,8 +284,9 @@ object SshTunnelManager {
         }
     }
 
-    private fun pump(from: InputStream, to: OutputStream, onEnd: () -> Unit) {
+    private fun pump(from: InputStream, to: OutputStream, onEnd: () -> Unit, onEof: (() -> Unit)? = null) {
         val buf = ByteArray(BUFFER_SIZE)
+        var failed = false
         try {
             while (true) {
                 val n = from.read(buf)
@@ -291,10 +294,12 @@ object SshTunnelManager {
                 to.write(buf, 0, n)
                 to.flush()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             // either side closed, that ends the pair
+            failed = true
+            LogUtil.d(AppConfig.TAG, "SSH pump ended: ${e.message}")
         } finally {
-            onEnd()
+            if (!failed && onEof != null) onEof() else onEnd()
         }
     }
 
