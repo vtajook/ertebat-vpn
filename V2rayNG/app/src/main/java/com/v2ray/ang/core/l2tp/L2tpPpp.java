@@ -293,7 +293,7 @@ final class L2tpPpp {
             try {
                 handleL2tp(b, len);
             } catch (IOException e) {
-                failure = "L2TP: " + e.getMessage();
+                failure = "L2TP: " + e;
                 lock.notifyAll();
             } catch (RuntimeException e) {
                 sink.log("L2TP: bad packet (" + e + ")");

@@ -1,6 +1,9 @@
 package com.v2ray.ang.core.routing
 
 import android.content.Context
+import android.net.IpPrefix
+import android.os.Build
+import java.net.InetAddress
 import android.net.VpnService
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.handler.MmkvManager
@@ -214,8 +217,23 @@ object DirectRoutes {
                 val r = rangeOf(start, prefix)
                 if (direct.isEmpty() || prefix >= 8) builder.addRoute(toIp(r.first), prefix) else wide.add(r)
             }
-            for (r in merge(wide)) {
-                for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
+            val merged = merge(wide)
+            if (merged.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Keep a real default route (so the system treats this as a full VPN and shows its icon) and cut the
+                // direct ranges out of it with excluded routes.
+                for (r in merged) for ((ip, p) in toCidrs(r)) builder.addRoute(toIp(ip), p)
+                for (c in direct) for (r in merged) {
+                    val lo = maxOf(c.first, r.first)
+                    val hi = minOf(c.last, r.last)
+                    if (lo > hi) continue
+                    for ((ip, p) in toCidrs(lo..hi)) {
+                        runCatching { builder.excludeRoute(IpPrefix(InetAddress.getByName(toIp(ip)), p)) }
+                    }
+                }
+            } else {
+                for (r in merged) {
+                    for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
+                }
             }
             for (ip in pinned) runCatching { builder.addRoute(toIp(ip), 32) }
         }

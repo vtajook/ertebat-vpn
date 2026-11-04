@@ -4,6 +4,7 @@ import android.content.Context
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.core.CoreConfigManager
 import com.v2ray.ang.core.CoreNativeManager
+import com.v2ray.ang.core.l2tp.L2tpProbe
 import com.v2ray.ang.core.ovpn.OpenVpnProbe
 import com.v2ray.ang.dto.RealPingEvent
 import com.v2ray.ang.enums.EConfigType
@@ -118,8 +119,8 @@ class RealPingWorkerService(
             return if (udp) OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
         if (config.configType == EConfigType.L2TP) {
-            // L2TP/IPsec is UDP only (IKE): there is nothing to connect to, so report a nominal value
-            return if (config.server.isNullOrBlank()) retFailure else 1L
+            // L2TP/IPsec is UDP only: the round trip of the first IKE message is what can be measured
+            return L2tpProbe.measure(config.server)
         }
         if (config.configType == EConfigType.ANYCONNECT) {
             // AnyConnect is not an Xray outbound: the reachability of the HTTPS port is what can be measured

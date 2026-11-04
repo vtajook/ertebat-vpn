@@ -388,6 +388,17 @@ final class Ike1 {
 
     // ── negotiation ────────────────────────────────────────────────────────────────────────────
 
+    private boolean probeOnly;
+    private long probeMs = -1;
+
+    /** Measures the round trip of the first IKE message (the server answers with its chosen proposal). */
+    static long probe(InetAddress server, Protector protector, Log log) throws IOException {
+        Ike1 ike = new Ike1(server, new byte[0], protector, log);
+        ike.probeOnly = true;
+        ike.negotiate();
+        return ike.probeMs;
+    }
+
     EspSa negotiate() throws IOException {
         DatagramSocket s500 = open(500);
         DatagramSocket s4500 = null;
@@ -440,7 +451,12 @@ final class Ike1 {
             m1.add(new P(NP_VID, md5("RFC 3947")));
             m1.add(new P(NP_VID, md5("draft-ietf-ipsec-nat-t-ike-02\n")));
             byte[] msg1 = isakmp(ckyI, new byte[8], NP_SA, EX_MAIN, 0, 0, payloads(m1));
+            long t0 = System.nanoTime();
             Msg r1 = exchange(s500, false, msg1, ckyI, 0, "main mode 1");
+            if (probeOnly) {
+                probeMs = Math.max(1, (System.nanoTime() - t0) / 1_000_000);
+                return null;
+            }
             byte[] ckyR = r1.ckyR;
             List<Pld> l1 = parsePayloads(r1.data, r1.next);
             Pld sa = find(l1, NP_SA);

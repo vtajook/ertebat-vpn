@@ -1,5 +1,7 @@
 package com.v2ray.ang.core.l2tp
 
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import com.v2ray.ang.AppConfig
@@ -54,8 +56,7 @@ class L2tpEngine(
     fun run(server: String, @Suppress("UNUSED_PARAMETER") port: Int): String? {
         var error: String? = null
         try {
-            val addr = InetAddress.getAllByName(server).firstOrNull { it.address.size == 4 }
-                ?: return "Cannot resolve the server address (IPv4)"
+            val addr = resolve(server) ?: return if (stopped.get()) null else "Cannot resolve the server address \"$server\" (no internet?)"
             listener.onLog("IKE: negotiating with ${addr.hostAddress}")
             val ike = Ike1(addr, psk.toByteArray(Charsets.UTF_8), { s -> service.protect(s) }, { listener.onLog(it) })
             val sa = try {
@@ -136,12 +137,34 @@ class L2tpEngine(
             runCatching { tunThread.interrupt(); rx.interrupt() }
         } catch (t: Throwable) {
             LogUtil.e(AppConfig.TAG, "L2TP engine crashed", t)
-            error = t.message ?: t.javaClass.simpleName
+            error = "${t.javaClass.simpleName}: ${t.message}"
         } finally {
             stop()
             tunOut = null
         }
         return if (stopped.get() && !expired && error == null) null else error
+    }
+
+    /** Resolves through a real (non-VPN) network first: an old tunnel that is still being torn down must not eat the lookup. */
+    private fun resolve(server: String): InetAddress? {
+        val cm = service.getSystemService(ConnectivityManager::class.java)
+        repeat(4) {
+            if (stopped.get()) return null
+            val nets = runCatching {
+                cm.allNetworks.filter { n ->
+                    cm.getNetworkCapabilities(n)?.let {
+                        it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                            !it.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+                    } == true
+                }
+            }.getOrDefault(emptyList())
+            for (n in nets) {
+                runCatching { n.getAllByName(server).firstOrNull { it.address.size == 4 } }.getOrNull()?.let { return it }
+            }
+            runCatching { InetAddress.getAllByName(server).firstOrNull { it.address.size == 4 } }.getOrNull()?.let { return it }
+            try { Thread.sleep(700) } catch (_: InterruptedException) { return null }
+        }
+        return null
     }
 
     @Volatile private var tunOut: FileOutputStream? = null
@@ -173,8 +196,9 @@ class L2tpEngine(
             } catch (_: SocketTimeoutException) {
             } catch (e: Exception) {
                 if (stopped.get()) return
-                LogUtil.w(AppConfig.TAG, "L2TP rx: ${e.message}")
+                LogUtil.w(AppConfig.TAG, "L2TP rx: ${e.javaClass.simpleName} ${e.message}")
                 if (sock.isClosed) return
+                try { Thread.sleep(50) } catch (_: InterruptedException) { return }
             }
         }
     }
