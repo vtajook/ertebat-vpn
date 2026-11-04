@@ -108,7 +108,7 @@ class OpenVpnEngine(
         for (key in servers.keys) {
             val server = servers[key] ?: continue
             for (address in server.addresses) {
-                if (address.port == 0 || address.port == 53) {
+                if (address.port == 0L || address.port == 53L) {
                     builder?.addDnsServer(address.address)
                     dnsAdded = true
                 }
