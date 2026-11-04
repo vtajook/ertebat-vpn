@@ -20,13 +20,25 @@ object OcNative {
             loaded = true
         }
     }
+
+    /**
+     * Factory lives here on purpose: touching a companion of [CiscoEngine] would initialise the class (and so
+     * [LibOpenConnect], whose static init calls into the library) before the library is loaded.
+     */
+    fun newEngine(
+        service: VpnService, remarks: String, username: String, password: String, group: String?,
+        listener: CiscoEngine.Listener,
+    ): CiscoEngine {
+        ensureLoaded()
+        return CiscoEngine(service, remarks, username, password, group, listener)
+    }
 }
 
 /**
  * Cisco AnyConnect client on top of libopenconnect (LGPL-2.1, `third_party/openconnect`). [run] blocks
  * until the session ends, so it belongs on a worker thread; [stop] may be called from any thread.
  */
-class CiscoEngine private constructor(
+class CiscoEngine internal constructor(
     private val service: VpnService,
     private val remarks: String,
     private val username: String,
@@ -212,14 +224,5 @@ class CiscoEngine private constructor(
         return runCatching {
             InetAddress.getByName(m).address.sumOf { Integer.bitCount(it.toInt() and 0xFF) }
         }.getOrDefault(default)
-    }
-
-    companion object {
-        fun create(
-            service: VpnService, remarks: String, username: String, password: String, group: String?, listener: Listener,
-        ): CiscoEngine {
-            OcNative.ensureLoaded()
-            return CiscoEngine(service, remarks, username, password, group, listener)
-        }
     }
 }

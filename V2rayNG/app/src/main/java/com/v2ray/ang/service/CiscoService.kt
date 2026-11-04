@@ -19,6 +19,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.LauncherManager
 import com.v2ray.ang.core.cisco.CiscoEngine
+import com.v2ray.ang.core.cisco.OcNative
 import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.TrafficSnapshot
 import com.v2ray.ang.handler.SettingsManager
@@ -101,7 +102,7 @@ class CiscoService : VpnService() {
         val config = guid?.let { MmkvManager.decodeServerConfig(it) }
         showNotification(config?.remarks)
 
-        if (config == null || config.server.isNullOrBlank() || config.username.isNullOrBlank()) {
+        if (config == null || config.server.isNullOrBlank()) {
             fail("Cisco AnyConnect profile is incomplete")
             return START_NOT_STICKY
         }
@@ -131,7 +132,7 @@ class CiscoService : VpnService() {
             }
         }
         try {
-            val e = CiscoEngine.create(
+            val e = OcNative.newEngine(
                 this, config.remarks, config.username.orEmpty(), config.password.orEmpty(), config.path, listener
             )
             engine = e

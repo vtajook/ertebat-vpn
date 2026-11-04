@@ -57,12 +57,12 @@ class ServerOpenVpnActivity : BaseServerActivity() {
                 placeholder = "client\ndev tun\nremote example.com 1194\n<ca>…</ca>"
             )
             FormTextField(
-                stringResource(R.string.server_lab_ssh_username),
+                stringResource(R.string.server_lab_username),
                 uiState.username,
                 { uiState.username = it }
             )
             FormTextField(
-                stringResource(R.string.server_lab_ssh_password),
+                stringResource(R.string.server_lab_password),
                 uiState.password,
                 { uiState.password = it }
             )

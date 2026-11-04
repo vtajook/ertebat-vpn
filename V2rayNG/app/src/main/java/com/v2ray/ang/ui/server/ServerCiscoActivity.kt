@@ -6,7 +6,6 @@ import androidx.compose.ui.res.stringResource
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
-import com.v2ray.ang.extension.toast
 import com.v2ray.ang.ui.compose.FormTextField
 
 /** Editor for Cisco AnyConnect profiles: server, port (typed in by the user), user name, password and an optional group. */
@@ -28,12 +27,12 @@ class ServerCiscoActivity : BaseServerActivity() {
         ) {
             CommonBasicFields(uiState)
             FormTextField(
-                stringResource(R.string.server_lab_ssh_username),
+                stringResource(R.string.server_lab_username),
                 uiState.username,
                 { uiState.username = it }
             )
             FormTextField(
-                stringResource(R.string.server_lab_ssh_password),
+                stringResource(R.string.server_lab_password),
                 uiState.password,
                 { uiState.password = it },
                 isError = uiState.isPasswordError
@@ -47,10 +46,7 @@ class ServerCiscoActivity : BaseServerActivity() {
     }
 
     override fun validateProtocolConfig(config: ProfileItem): Boolean {
-        if (config.username.isNullOrBlank() || config.password.isNullOrBlank()) {
-            toast(R.string.toast_ssh_credentials_required)
-            return false
-        }
+        // user name and password may be left empty (some servers ask for neither or only one)
         return true
     }
 }
