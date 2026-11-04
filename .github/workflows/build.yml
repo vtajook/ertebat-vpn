@@ -75,6 +75,41 @@ jobs:
       run: |
         cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
 
+    # Cisco AnyConnect engine (libopenconnect + OpenSSL + libxml2), cross-built per ABI and cached.
+    - name: Install NDK for libopenconnect
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.14206865"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+        sudo apt-get install -y -qq autoconf automake libtool pkg-config cmake make
+
+    - name: Restore cached libopenconnect
+      id: cache-oc-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/oc-libs
+        key: libopenconnect-${{ runner.os }}-${{ hashFiles('scripts/build-openconnect.sh', '.git/modules/third_party/openconnect/HEAD') }}
+
+    - name: Build libopenconnect
+      if: steps.cache-oc-restore.outputs.cache-hit != 'true'
+      env:
+        JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+      run: |
+        export JAVA_HOME="${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which javac))))}"
+        bash scripts/build-openconnect.sh
+        mkdir -p oc-libs
+        for a in arm64-v8a armeabi-v7a x86_64 x86; do mkdir -p oc-libs/$a; cp V2rayNG/app/libs/$a/libopenconnect.so oc-libs/$a/; done
+
+    - name: Save libopenconnect
+      if: steps.cache-oc-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/oc-libs
+        key: libopenconnect-${{ runner.os }}-${{ hashFiles('scripts/build-openconnect.sh', '.git/modules/third_party/openconnect/HEAD') }}
+
+    - name: Copy libopenconnect
+      run: |
+        for a in arm64-v8a armeabi-v7a x86_64 x86; do mkdir -p V2rayNG/app/libs/$a; cp oc-libs/$a/libopenconnect.so V2rayNG/app/libs/$a/; done
+
     # Xray core bridge, built from source so that Xray-core can be patched: since Xray 26.7.11 plain
     # VLESS/Trojan (no TLS/REALITY) is refused. scripts/patch_xray.py removes that check (the build
     # fails if the code it patches ever changes) while the core stays on the latest version.
