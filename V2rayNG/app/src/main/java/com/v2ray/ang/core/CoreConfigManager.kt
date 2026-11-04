@@ -218,6 +218,7 @@ object CoreConfigManager {
         configureDns(configContext, v2rayConfig, policyGroupBalancerTags)
         configureLocalDns(configContext, v2rayConfig)
         configureRootModeDns(v2rayConfig)
+        configureSshDns(primaryResolvedOutbound.profile.configType == EConfigType.SSH, v2rayConfig)
 
         // (added by getDns / getCustomLocalDns) to use the balancer, then add
         // the catch-all balancer rule.
@@ -703,6 +704,36 @@ object CoreConfigManager {
                     mux = null
                 )
             )
+        }
+    }
+
+    /**
+     * An SSH tunnel carries TCP only, so raw UDP/53 from apps would vanish and every site that needs a
+     * lookup would hang. Port 53 is handed to the core's DNS module instead, and its upstream servers
+     * are queried over TCP, which goes through the tunnel.
+     */
+    private fun configureSshDns(isSsh: Boolean, v2rayConfig: V2rayConfig) {
+        if (!isSsh) return
+        v2rayConfig.routing.rules.add(
+            0,
+            V2rayConfig.RoutingBean.RulesBean(
+                inboundTag = arrayListOf("socks", "tun"),
+                outboundTag = "dns-out",
+                port = "53",
+            )
+        )
+        if (v2rayConfig.outbounds.none { it.protocol == "dns" && it.tag == "dns-out" }) {
+            v2rayConfig.outbounds.add(
+                V2rayConfig.OutboundBean(protocol = "dns", tag = "dns-out", settings = null, streamSettings = null, mux = null)
+            )
+        }
+        val dns = v2rayConfig.dns ?: return
+        val tcp = { a: String -> if (a.contains("://") || a == "localhost" || a == "fakedns") a else "tcp://$a" }
+        val servers = dns.servers ?: return
+        for (i in servers.indices) {
+            val e = servers[i]
+            if (e is String) servers[i] = tcp(e)
+            else if (e is V2rayConfig.DnsBean.ServersBean) e.address = tcp(e.address.orEmpty())
         }
     }
 
