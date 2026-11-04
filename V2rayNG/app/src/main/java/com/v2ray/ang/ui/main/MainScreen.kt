@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
@@ -158,11 +159,15 @@ fun MainScreen(
     ) {
         Scaffold(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF4A0F14), MaterialTheme.colorScheme.background)
+                    )
+                )
                 .paint(
                     painter = painterResource(R.drawable.bg_watermark),
                     contentScale = ContentScale.Fit,
-                    alpha = 0.07f
+                    alpha = 0.22f
                 ),
             containerColor = Color.Transparent,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,

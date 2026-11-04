@@ -81,11 +81,11 @@ private val DarkColor = darkColorScheme(
     errorContainer = Color(0xFF93000A), // Dark Red
     onError = Color(0xFF690005), // Deep Red
     onErrorContainer = Color(0xFFFFDAD6), // Light Red
-    background = Color(0xFF0A0A0A), // Near Black
+    background = Color(0xFF141012), // Near Black
     onBackground = Color(0xFFF2F2F2), // Light Gray
-    surface = Color(0xFF0A0A0A), // Near Black
+    surface = Color(0xFF141012), // Near Black
     onSurface = Color(0xFFF2F2F2), // Light Gray
-    surfaceVariant = Color(0xFF2A1B1B), // Dark Gray
+    surfaceVariant = Color(0xFF3A2A2C), // Dark Gray
     onSurfaceVariant = Color(0xFFD9C4C2), // Light Gray
     outline = Color(0xFF8F7B79), // Grayish Purple
     outlineVariant = Color(0xFF3A2A2A), // Dark Gray
@@ -94,11 +94,11 @@ private val DarkColor = darkColorScheme(
     inversePrimary = Color(0xFFC62828), // Ertebat blue
     scrim = Color(0xFF000000), // Black
     surfaceTint = Color(0xFFE53935), // Light blue
-    surfaceContainerLowest = Color(0xFF000000), // Near Black
-    surfaceContainerLow = Color(0xFF121212), // Dark Gray
-    surfaceContainer = Color(0xFF171717), // Dark Gray
-    surfaceContainerHigh = Color(0xFF1F1F1F), // Dark Gray
-    surfaceContainerHighest = Color(0xFF292929), // Dark Gray
+    surfaceContainerLowest = Color(0xFF0E0A0B), // Near Black
+    surfaceContainerLow = Color(0xFF1C1517), // Dark Gray
+    surfaceContainer = Color(0xFF231B1D), // Dark Gray
+    surfaceContainerHigh = Color(0xFF2C2224), // Dark Gray
+    surfaceContainerHighest = Color(0xFF362B2D), // Dark Gray
 )
 
 // Semantic Colors
