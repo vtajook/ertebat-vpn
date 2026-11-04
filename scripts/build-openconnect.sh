@@ -59,13 +59,14 @@ build_abi() {
   fi
   [ -f "$P/lib/libxml2.a" ] || { echo "libxml2 missing"; exit 1; }
 
-  # OpenConnect (+ JNI)
+  # OpenConnect (+ JNI). OpenSSL 3 dropped ERR_GET_FUNC, which libopenconnect only uses in log messages.
+  printf '#ifndef ERR_GET_FUNC\n#define ERR_GET_FUNC(e) 0\n#endif\n' > "$WORK/oc-shim.h"
   export CC="$TOOLBIN/${triple}${API}-clang" AR="$TOOLBIN/llvm-ar" RANLIB="$TOOLBIN/llvm-ranlib" STRIP="$TOOLBIN/llvm-strip"
   rm -rf "$WORK/oc-$abi"; mkdir -p "$WORK/oc-$abi"
   (cd "$WORK/oc-$abi" &&
     OPENSSL_CFLAGS="-I$P/include" OPENSSL_LIBS="$SSLLIB/libssl.a $SSLLIB/libcrypto.a -ldl -lz" \
     LIBXML2_CFLAGS="-I$P/include/libxml2 -DLIBXML_STATIC" LIBXML2_LIBS="$P/lib/libxml2.a -lz -lm" \
-    CFLAGS="-O2 -fPIC -Wno-deprecated-declarations -I$JNI_INC/linux" \
+    CFLAGS="-O2 -fPIC -Wno-deprecated-declarations -I$JNI_INC/linux -include $WORK/oc-shim.h" \
     "$WORK/oc-src/configure" --host="$host" --prefix="$P/oc" \
       --enable-shared --disable-static --enable-jni-standalone --with-java="$JNI_INC" \
       --with-openssl --without-gnutls --without-lz4 --without-stoken --without-libproxy --without-libpcsclite \
