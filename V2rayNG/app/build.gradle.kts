@@ -13,7 +13,8 @@ android {
         applicationId = "ir.ertebatgoostar.vpn"
         minSdk = 24
         targetSdk = 37
-        versionCode = 755
+        // CI run number keeps the version code growing so every build installs as an update
+        versionCode = 755 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
         versionName = "2.3.15"
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
@@ -38,7 +39,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Test builds from CI are signed with this fixed key so every build can be installed over the
+    // previous one. The key is public (it lives in the repository): it is for testing only. Releases
+    // for customers must be signed through the APP_KEYSTORE_* secrets, see the workflow.
+    signingConfigs {
+        create("egnTest") {
+            storeFile = file("egn-test.jks")
+            storePassword = "rZCtVbuIGCf3VecunIERe81e"
+            keyAlias = "egnvpn"
+            keyPassword = "rZCtVbuIGCf3VecunIERe81e"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("egnTest")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

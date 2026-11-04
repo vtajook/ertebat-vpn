@@ -36,7 +36,7 @@ to `main`.
 
 For updates to install over older versions, add these repository secrets so every build is signed with
 the same key: `APP_KEYSTORE_BASE64`, `APP_KEYSTORE_PASSWORD`, `APP_KEYSTORE_ALIAS`, `APP_KEY_PASSWORD`.
-Without them the workflow produces debug-signed APKs (fine for testing only).
+Without them the workflow produces test APKs signed with the fixed, public test key `V2rayNG/app/egn-test.jks` (they update each other, but anyone could sign an APK with that key, so never ship it to customers).
 
 Publishing a release (run the workflow with `release_tag`, e.g. `v1.0.0`) feeds the in-app update check.
 

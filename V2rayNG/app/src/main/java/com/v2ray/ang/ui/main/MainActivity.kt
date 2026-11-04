@@ -160,6 +160,10 @@ class MainActivity : HelperBaseComponentActivity() {
                 Utils.openUri(this, AppConfig.TG_CHANNEL_URL)
                 return
             }
+            MainDestination.Bot -> {
+                Utils.openUri(this, AppConfig.TG_BOT_URL)
+                return
+            }
         }
         settingsActivityLauncher.launch(intent)
     }

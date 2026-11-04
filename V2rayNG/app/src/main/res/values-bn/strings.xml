@@ -573,4 +573,6 @@
     <string name="stats_upload">Upload</string>
     <string name="stats_session_usage">Used</string>
     <string name="stats_duration">Time</string>
+    <string name="title_tg_bot">Telegram bot (@egnvpnbot)</string>
+    <string name="drawer_brand_tagline">Ertebat Goostar</string>
 </resources>

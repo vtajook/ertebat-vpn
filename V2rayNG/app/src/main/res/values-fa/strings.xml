@@ -573,4 +573,6 @@
     <string name="stats_upload">آپلود</string>
     <string name="stats_session_usage">مصرف</string>
     <string name="stats_duration">مدت اتصال</string>
+    <string name="title_tg_bot">ربات تلگرام (@egnvpnbot)</string>
+    <string name="drawer_brand_tagline">ارتباط گستر</string>
 </resources>
