@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.sp
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.TrafficSnapshot
 import com.v2ray.ang.extension.toSpeedString
-import com.v2ray.ang.ui.compose.colorSuccess
+import com.v2ray.ang.ui.compose.statusSuccess
 import com.v2ray.ang.ui.compose.pingColor
 import kotlinx.coroutines.delay
 
@@ -127,7 +127,7 @@ internal fun HomeContent(
         while (history.size > 40) history.removeAt(0)
     }
 
-    val stateColor = if (isRunning) colorSuccess else MaterialTheme.colorScheme.onSurfaceVariant
+    val stateColor = if (isRunning) statusSuccess() else MaterialTheme.colorScheme.onSurfaceVariant
     val stateText = stringResource(if (isRunning) R.string.egn_home_connected else R.string.egn_home_disconnected)
 
     Column(
@@ -246,7 +246,7 @@ private fun RowScope.StatTile(
 
 @Composable
 private fun SpeedChart(samples: List<Long>, modifier: Modifier = Modifier) {
-    val barColor = colorSuccess
+    val barColor = statusSuccess()
     val emptyColor = MaterialTheme.colorScheme.outlineVariant
     Canvas(modifier = modifier) {
         val slots = 40

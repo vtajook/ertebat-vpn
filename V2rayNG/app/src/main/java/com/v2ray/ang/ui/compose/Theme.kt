@@ -83,40 +83,40 @@ private val DarkColor = darkColorScheme(
 )
 
 private val LightColor = lightColorScheme(
-    primary = Color(0xFFE01E30),
+    primary = Color(0xFFE51F32),
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFFFDADD),
-    onPrimaryContainer = Color(0xFF410006),
-    secondary = Color(0xFFC21A2A),
+    primaryContainer = Color(0xFFFFE3E6),
+    onPrimaryContainer = Color(0xFFC8172A),
+    secondary = Color(0xFFC8172A),
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFE9EDF2),
-    onSecondaryContainer = Color(0xFF0A0B0F),
-    tertiary = Color(0xFF008F5F),
+    secondaryContainer = Color(0xFFFFF0F1),
+    onSecondaryContainer = Color(0xFF171B22),
+    tertiary = Color(0xFF087F5B),
     onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFB7F5DF),
-    onTertiaryContainer = Color(0xFF00201A),
-    error = Color(0xFFD63040),
-    errorContainer = Color(0xFFFFDAD6),
+    tertiaryContainer = Color(0xFFDDF7EC),
+    onTertiaryContainer = Color(0xFF087F5B),
+    error = Color(0xFFC62836),
+    errorContainer = Color(0xFFFFE4E7),
     onError = Color(0xFFFFFFFF),
-    onErrorContainer = Color(0xFF410002),
-    background = Color(0xFFF5F6F8),
-    onBackground = Color(0xFF0A0B0F),
-    surface = Color(0xFFF5F6F8),
-    onSurface = Color(0xFF0A0B0F),
-    surfaceVariant = Color(0xFFE6EAF0),
-    onSurfaceVariant = Color(0xFF4A5565),
-    outline = Color(0xFF778391),
-    outlineVariant = Color(0xFFD5DBE3),
+    onErrorContainer = Color(0xFFC62836),
+    background = Color(0xFFF5F7FA),
+    onBackground = Color(0xFF171B22),
+    surface = Color(0xFFF5F7FA),
+    onSurface = Color(0xFF171B22),
+    surfaceVariant = Color(0xFFEEF1F5),
+    onSurfaceVariant = Color(0xFF596575),
+    outline = Color(0xFF7C8795),
+    outlineVariant = Color(0xFFDCE2E9),
     inverseSurface = Color(0xFF121720),
     inverseOnSurface = Color(0xFFF4F7FB),
     inversePrimary = Color(0xFFFF4050),
     scrim = Color(0xFF000000),
-    surfaceTint = Color(0xFFE01E30),
+    surfaceTint = Color(0xFFE51F32),
     surfaceContainerLowest = Color(0xFFFFFFFF),
     surfaceContainerLow = Color(0xFFFFFFFF),
     surfaceContainer = Color(0xFFFFFFFF),
     surfaceContainerHigh = Color(0xFFEEF1F5),
-    surfaceContainerHighest = Color(0xFFE6EAF0),
+    surfaceContainerHighest = Color(0xFFE7EBF0),
 )
 
 // Semantic Colors
@@ -126,15 +126,29 @@ val colorConfigType = colorInfo
 val colorFabActive = colorBrand
 val colorFabInactiveLight = colorDivider
 val colorFabInactiveDark = colorDivider
-val dividerColorLight = Color(0xFFD5DBE3)
+val dividerColorLight = Color(0xFFE7EBF0)
 val dividerColorDark = colorDivider
 
+/** Status colours keep their meaning in both themes; the light variants are darker for contrast on white. */
+@Composable
+fun statusSuccess(): Color = if (LocalDarkTheme.current) colorSuccess else Color(0xFF087F5B)
+
+@Composable
+fun statusWarning(): Color = if (LocalDarkTheme.current) colorWarning else Color(0xFFA85B00)
+
+@Composable
+fun statusError(): Color = if (LocalDarkTheme.current) colorError else Color(0xFFC62836)
+
+@Composable
+fun statusNoResponse(): Color = if (LocalDarkTheme.current) colorNoResponse else Color(0xFF687586)
+
 /** Colour of a delay value: 0-80 ms good, 81-150 ms medium, above that poor, negative = no answer. */
+@Composable
 fun pingColor(delayMillis: Long): Color = when {
-    delayMillis < 0L -> colorNoResponse
-    delayMillis <= 80L -> colorSuccess
-    delayMillis <= 150L -> colorWarning
-    else -> colorError
+    delayMillis < 0L -> statusNoResponse()
+    delayMillis <= 80L -> statusSuccess()
+    delayMillis <= 150L -> statusWarning()
+    else -> statusError()
 }
 
 private val Vazirmatn = FontFamily(
