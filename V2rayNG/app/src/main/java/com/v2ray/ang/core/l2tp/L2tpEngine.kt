@@ -183,7 +183,9 @@ class L2tpEngine(
         val b = service.Builder().setBlocking(true).setSession(remarks.ifBlank { AppConfig.TAG })
         val routes = DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(service) }.getOrDefault(emptyList()))
         return try {
-            b.setMtu(if (link.mru in 1000..1360) link.mru else 1360)
+            // ESP-in-UDP + L2TP + PPP add ~90 bytes, and the server path (GRE relays etc.) is often below 1500:
+            // a small MTU avoids fragmentation, which is what makes such tunnels crawl
+            b.setMtu(if (link.mru in 1000..1280) link.mru else 1280)
             b.addAddress(L2tpPpp.ip(link.ip), 32)
             var dns = 0
             for (d in listOf(link.dns1, link.dns2)) {

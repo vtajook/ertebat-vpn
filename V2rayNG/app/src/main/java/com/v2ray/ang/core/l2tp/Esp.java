@@ -21,6 +21,8 @@ final class Esp {
     private final int icvLen;
     private final SecureRandom rnd = new SecureRandom();
     private long seq = 0;
+    private Cipher encCipher, decCipher;
+    private Mac encMac, decMac;
 
     Esp(Ike1.EspSa sa) {
         this.inSpi = sa.inSpi;
@@ -47,7 +49,8 @@ final class Esp {
 
         byte[] iv = new byte[block];
         rnd.nextBytes(iv);
-        Cipher c = Cipher.getInstance(cipherName);
+        if (encCipher == null) encCipher = Cipher.getInstance(cipherName);
+        Cipher c = encCipher;
         c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(encOut, keyAlg), new IvParameterSpec(iv));
         byte[] ct = c.doFinal(plain);
 
@@ -58,28 +61,29 @@ final class Esp {
         System.arraycopy(iv, 0, pkt, 8, block);
         System.arraycopy(ct, 0, pkt, 8 + block, ct.length);
         int authLen = 8 + block + ct.length;
-        Mac mac = Mac.getInstance(macName);
-        mac.init(new SecretKeySpec(authOut, macName));
+        if (encMac == null) { encMac = Mac.getInstance(macName); encMac.init(new SecretKeySpec(authOut, macName)); }
+        Mac mac = encMac;
         mac.update(pkt, 0, authLen);
         System.arraycopy(mac.doFinal(), 0, pkt, authLen, icvLen);
         return pkt;
     }
 
     /** @return the transported datagram, or null when the packet is not ours / fails authentication. */
-    byte[] decrypt(byte[] pkt, int len, int[] nextHeaderOut) throws GeneralSecurityException {
+    synchronized byte[] decrypt(byte[] pkt, int len, int[] nextHeaderOut) throws GeneralSecurityException {
         int minLen = 8 + block + block + icvLen;
         if (len < minLen) return null;
         if (getInt(pkt, 0) != inSpi) return null;
         int authLen = len - icvLen;
-        Mac mac = Mac.getInstance(macName);
-        mac.init(new SecretKeySpec(authIn, macName));
+        if (decMac == null) { decMac = Mac.getInstance(macName); decMac.init(new SecretKeySpec(authIn, macName)); }
+        Mac mac = decMac;
         mac.update(pkt, 0, authLen);
         byte[] icv = Arrays.copyOf(mac.doFinal(), icvLen);
         if (!MessageDigest.isEqual(icv, Arrays.copyOfRange(pkt, authLen, len))) return null;
 
         int ctLen = authLen - 8 - block;
         if (ctLen <= 0 || ctLen % block != 0) return null;
-        Cipher c = Cipher.getInstance(cipherName);
+        if (decCipher == null) decCipher = Cipher.getInstance(cipherName);
+        Cipher c = decCipher;
         c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(encIn, keyAlg), new IvParameterSpec(pkt, 8, block));
         byte[] plain = c.doFinal(pkt, 8 + block, ctLen);
         int padLen = plain[plain.length - 2] & 0xFF;
