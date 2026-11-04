@@ -11,6 +11,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.v2ray.ang.R
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
@@ -80,6 +82,43 @@ private val DarkColor = darkColorScheme(
     surfaceContainerHighest = Color(0xFF212B38),
 )
 
+private val LightColor = lightColorScheme(
+    primary = Color(0xFFE01E30),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFFFDADD),
+    onPrimaryContainer = Color(0xFF410006),
+    secondary = Color(0xFFC21A2A),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFE9EDF2),
+    onSecondaryContainer = Color(0xFF0A0B0F),
+    tertiary = Color(0xFF008F5F),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFB7F5DF),
+    onTertiaryContainer = Color(0xFF00201A),
+    error = Color(0xFFD63040),
+    errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF),
+    onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFF5F6F8),
+    onBackground = Color(0xFF0A0B0F),
+    surface = Color(0xFFF5F6F8),
+    onSurface = Color(0xFF0A0B0F),
+    surfaceVariant = Color(0xFFE6EAF0),
+    onSurfaceVariant = Color(0xFF4A5565),
+    outline = Color(0xFF778391),
+    outlineVariant = Color(0xFFD5DBE3),
+    inverseSurface = Color(0xFF121720),
+    inverseOnSurface = Color(0xFFF4F7FB),
+    inversePrimary = Color(0xFFFF4050),
+    scrim = Color(0xFF000000),
+    surfaceTint = Color(0xFFE01E30),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFFFFFF),
+    surfaceContainer = Color(0xFFFFFFFF),
+    surfaceContainerHigh = Color(0xFFEEF1F5),
+    surfaceContainerHighest = Color(0xFFE6EAF0),
+)
+
 // Semantic Colors
 val colorPing = colorSuccess
 val colorPingRed = colorError
@@ -87,7 +126,7 @@ val colorConfigType = colorInfo
 val colorFabActive = colorBrand
 val colorFabInactiveLight = colorDivider
 val colorFabInactiveDark = colorDivider
-val dividerColorLight = colorDivider
+val dividerColorLight = Color(0xFFD5DBE3)
 val dividerColorDark = colorDivider
 
 /** Colour of a delay value: 0-80 ms good, 81-150 ms medium, above that poor, negative = no answer. */
@@ -126,7 +165,7 @@ val toastTextColor = Color.White // White
 
 object ThemeManager {
     private val _themeMode = MutableStateFlow(
-        MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
+        MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "2") ?: "2"
     )
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
@@ -147,7 +186,7 @@ object ThemeManager {
 
     fun refresh() {
         _themeMode.value =
-            MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
+            MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "2") ?: "2"
         _dynamicColorEnabled.value =
             MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, true)
     }
@@ -155,8 +194,13 @@ object ThemeManager {
 
 @Composable
 fun resolveDarkTheme(): Boolean {
-    // EGN VPN has one look: the Dark Cyber Red theme.
-    return true
+    val mode by ThemeManager.themeMode.collectAsState()
+    // Dark Cyber Red is the default look; light (or following the system) can still be chosen in settings.
+    return when (mode) {
+        "1" -> false
+        "0" -> isSystemInDarkTheme()
+        else -> true
+    }
 }
 
 val LocalDarkTheme = compositionLocalOf { false }
@@ -166,7 +210,7 @@ fun AppTheme(
     darkTheme: Boolean = resolveDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColor
+    val colorScheme = if (darkTheme) DarkColor else LightColor
     val snackbarController = rememberAppSnackbarController()
 
     val view = LocalView.current
