@@ -133,7 +133,16 @@ class RealPingWorkerService(
             return retFailure
         }
         return RealPingExecutionLimiter.run(config.configType) {
-            CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+            var delay = CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+            if (delay < 0 && config.configType == EConfigType.WIREGUARD) {
+                // WireGuard needs a UDP handshake (and a DNS lookup through the tunnel) before the first
+                // byte flows, so the first probe often times out: try again, then with the second URL.
+                delay = CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+                if (delay < 0) {
+                    delay = CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl(true))
+                }
+            }
+            delay
         }
     }
 

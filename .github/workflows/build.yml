@@ -66,21 +66,25 @@ jobs:
       run: |
         cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
 
-    - name: Fetch AndroidLibXrayLite tag
-      run: |
-        pushd AndroidLibXrayLite
-        CURRENT_TAG=$(git describe --tags --abbrev=0)
-        echo "Current tag in this repo: $CURRENT_TAG"
-        echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
-        popd
-
-    - name: Download libv2ray (Xray core)
-      uses: robinraju/release-downloader@v1.13
+    # Xray core bridge, built from source so that Xray-core can be patched: since Xray 26.7.11 plain
+    # VLESS/Trojan (no TLS/REALITY) is refused. scripts/patch_xray.py removes that check (the build
+    # fails if the code it patches ever changes) while the core stays on the latest version.
+    - name: Setup Go
+      uses: actions/setup-go@v6
       with:
-        repository: '2dust/AndroidLibXrayLite'
-        tag: ${{ env.CURRENT_TAG }}
-        fileName: 'libv2ray.aar'
-        out-file-path: V2rayNG/app/libs/
+        go-version-file: AndroidLibXrayLite/go.mod
+        cache: false
+
+    - name: Install NDK for libv2ray
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.14206865"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+
+    - name: Build libv2ray (patched Xray core)
+      run: |
+        bash scripts/build-libv2ray.sh
+        mkdir -p V2rayNG/app/libs
+        cp libv2ray-out/libv2ray.aar V2rayNG/app/libs/libv2ray.aar
 
     - name: Setup Java
       uses: actions/setup-java@v6.1.0

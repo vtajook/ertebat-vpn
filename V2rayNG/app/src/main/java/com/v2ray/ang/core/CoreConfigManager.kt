@@ -203,6 +203,17 @@ object CoreConfigManager {
 
         // User routing rules (policyGroupBalancerTags rewrites TAG_PROXY→balancer when main is POLICYGROUP).
         configureRouting(configContext, v2rayConfig, policyGroupBalancerTags)
+        // QUIC (UDP/443) is dropped so Instagram, YouTube & co. fall back to TCP/TLS right away. Over
+        // TCP-based tunnels (VLESS/VMess over TCP/WS, SSH) UDP/443 either cannot be carried or gets
+        // stuck, which makes Instagram hang while Telegram and WhatsApp (TCP/own protocol) work.
+        v2rayConfig.routing.rules.add(
+            0,
+            V2rayConfig.RoutingBean.RulesBean(
+                network = "udp",
+                port = "443",
+                outboundTag = AppConfig.TAG_BLOCKED,
+            )
+        )
         configureFakeDns(v2rayConfig)
         configureDns(configContext, v2rayConfig, policyGroupBalancerTags)
         configureLocalDns(configContext, v2rayConfig)

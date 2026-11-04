@@ -11,7 +11,7 @@ Based on open-source projects; licensed under GPL-3.0.
 
 | Protocol | Status | How |
 |----------|--------|-----|
-| V2Ray / Xray (VLESS, VMess, Trojan, Shadowsocks, …) | ✅ | Xray core from v2rayNG; plain TCP / WebSocket, TLS is **not** mandatory |
+| V2Ray / Xray (VLESS, VMess, Trojan, Shadowsocks, …) | ✅ | latest Xray core, patched in CI (`scripts/patch_xray.py`) so TLS is **not** mandatory; plain TCP / WebSocket work |
 | WireGuard | ✅ | Xray WireGuard outbound; import `wireguard://` links or `.conf` files (clipboard / file / QR) |
 | SSH | ✅ (new, untested on device) | `ssh://user:pass@host:port#name`; login with sshj, traffic carried through a local SOCKS5 proxy (`direct-tcpip`) into the same tunnel. TCP only (SSH cannot carry UDP); the server must allow TCP forwarding |
 | OpenVPN | ⏳ not yet | needs a separate native OpenVPN engine, see below |
