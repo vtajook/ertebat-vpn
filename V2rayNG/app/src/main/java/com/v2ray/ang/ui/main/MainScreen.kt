@@ -217,7 +217,7 @@ fun MainScreen(
                     selected = tab,
                     onSelect = { target ->
                         when (target) {
-                            MainTab.Logs -> onNavigate(MainDestination.Logcat)
+                            MainTab.Logs -> onNavigate(MainDestination.Events)
                             MainTab.Settings -> onNavigate(MainDestination.Settings)
                             else -> tabName = target.name
                         }

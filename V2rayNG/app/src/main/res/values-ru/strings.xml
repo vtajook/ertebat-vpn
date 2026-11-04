@@ -605,4 +605,16 @@
     <string name="egn_ping_start">Start test</string>
     <string name="egn_ping_stop">Stop test</string>
     <string name="egn_ping_results">Latest results</string>
+    <string name="egn_event_connected">Connected</string>
+    <string name="egn_event_disconnected">Disconnected</string>
+    <string name="egn_event_failed">Connection failed</string>
+    <string name="egn_events_filter_all">All</string>
+    <string name="egn_events_filter_success">Success</string>
+    <string name="egn_events_filter_error">Errors</string>
+    <string name="egn_events_filter_info">Info</string>
+    <string name="egn_events_empty">No events yet</string>
+    <string name="egn_events_clear_title">Clear logs?</string>
+    <string name="egn_events_clear_message">The connection history will be deleted.</string>
+    <string name="egn_events_clear">Clear</string>
+    <string name="egn_events_technical">Technical log</string>
 </resources>

@@ -601,4 +601,16 @@
     <string name="egn_ping_start">شروع تست</string>
     <string name="egn_ping_stop">توقف تست</string>
     <string name="egn_ping_results">نتایج اخیر</string>
+    <string name="egn_event_connected">اتصال موفق</string>
+    <string name="egn_event_disconnected">قطع اتصال</string>
+    <string name="egn_event_failed">اتصال ناموفق</string>
+    <string name="egn_events_filter_all">همه</string>
+    <string name="egn_events_filter_success">موفق</string>
+    <string name="egn_events_filter_error">خطا</string>
+    <string name="egn_events_filter_info">اطلاعات</string>
+    <string name="egn_events_empty">هنوز رخدادی ثبت نشده</string>
+    <string name="egn_events_clear_title">پاک کردن گزارش‌ها؟</string>
+    <string name="egn_events_clear_message">تاریخچه‌ی اتصال‌ها حذف می‌شود.</string>
+    <string name="egn_events_clear">پاک کردن</string>
+    <string name="egn_events_technical">لاگ فنی</string>
 </resources>

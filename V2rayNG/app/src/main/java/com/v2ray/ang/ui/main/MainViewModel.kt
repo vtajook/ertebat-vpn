@@ -18,6 +18,8 @@ import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.isComplexType
 import com.v2ray.ang.extension.matchesPattern
 import com.v2ray.ang.extension.moveItem
+import com.v2ray.ang.handler.EventLog
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SubscriptionInfoParser
 import com.v2ray.ang.ui.base.BaseViewModel
 import com.v2ray.ang.util.LogUtil
@@ -126,16 +128,21 @@ class MainViewModel(
         }
     }
 
+    private fun selectedRemarks(): String =
+        MmkvManager.getSelectServer()?.let { MmkvManager.decodeServerConfig(it)?.remarks }.orEmpty()
+
     private fun handleServiceEvent(event: MainServiceEvent) {
         when (event) {
             MainServiceEvent.StateRunning -> updateRunningState(true, clearTestingText = false)
             MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false)
             MainServiceEvent.StateStartSuccess -> {
+                if (!uiState.value.isRunning) EventLog.record(EventLog.KIND_CONNECTED, selectedRemarks())
                 toastSuccess(R.string.toast_services_success)
                 updateRunningState(true)
             }
 
             is MainServiceEvent.StateStartFailure -> {
+                EventLog.record(EventLog.KIND_FAILED, listOfNotNull(selectedRemarks().takeIf { it.isNotBlank() }, event.message).joinToString(": "))
                 if (!event.message.isNullOrBlank()) {
                     toastError(event.message)
                 } else {
@@ -144,7 +151,10 @@ class MainViewModel(
                 updateRunningState(false)
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> {
+                if (uiState.value.isRunning) EventLog.record(EventLog.KIND_DISCONNECTED, selectedRemarks())
+                updateRunningState(false)
+            }
             is MainServiceEvent.Stats -> _uiState.update { state ->
                 // late snapshots after a stop must not bring the card back
                 if (state.isRunning) state.copy(stats = event.snapshot) else state
