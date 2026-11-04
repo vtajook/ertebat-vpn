@@ -4,6 +4,7 @@ import android.net.IpPrefix
 import android.net.VpnService
 import android.os.Build
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.core.routing.DirectRoutes
 import com.v2ray.ang.util.LogUtil
 import net.openvpn.ovpn3.ClientAPI_AppCustomControlMessageEvent
 import net.openvpn.ovpn3.ClientAPI_Config
@@ -34,6 +35,7 @@ class OpenVpnEngine(
     }
 
     private var builder: VpnService.Builder? = null
+    private var routes: DirectRoutes.Collector? = null
     private var dnsAdded = false
     private var sessionName = AppConfigName
 
@@ -73,7 +75,11 @@ class OpenVpnEngine(
     // ── tun builder ────────────────────────────────────────────────────────────────────────────
 
     override fun tun_builder_new(): Boolean {
-        builder = service?.Builder()?.setBlocking(false)
+        val b = service?.Builder()?.setBlocking(false)
+        builder = b
+        routes = if (b != null && service != null) {
+            DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(service) }.getOrDefault(emptyList()))
+        } else null
         dnsAdded = false
         return true
     }
@@ -89,12 +95,12 @@ class OpenVpnEngine(
     override fun tun_builder_set_route_metric_default(metric: Int): Boolean = true
 
     override fun tun_builder_reroute_gw(ipv4: Boolean, ipv6: Boolean, flags: Long): Boolean = guard {
-        if (ipv4) builder?.addRoute("0.0.0.0", 0)
+        if (ipv4) routes?.addRoute("0.0.0.0", 0)
         if (ipv6) builder?.addRoute("::", 0)
     }
 
     override fun tun_builder_add_route(address: String, prefixLength: Int, metric: Int, ipv6: Boolean): Boolean =
-        guard { builder?.addRoute(address, prefixLength) }
+        guard { if (ipv6) builder?.addRoute(address, prefixLength) else routes?.addRoute(address, prefixLength) }
 
     override fun tun_builder_exclude_route(address: String, prefixLength: Int, metric: Int, ipv6: Boolean): Boolean =
         guard {
@@ -110,6 +116,7 @@ class OpenVpnEngine(
             for (address in server.addresses) {
                 if (address.port == 0L || address.port == 53L) {
                     builder?.addDnsServer(address.address)
+                    routes?.pin(address.address)
                     dnsAdded = true
                 }
             }
@@ -146,6 +153,7 @@ class OpenVpnEngine(
                 b.addDnsServer("8.8.8.8")
             }
             b.setSession(sessionName)
+            routes?.apply()
             val pfd = b.establish()
             if (pfd == null) -1 else pfd.detachFd()
         } catch (e: Exception) {

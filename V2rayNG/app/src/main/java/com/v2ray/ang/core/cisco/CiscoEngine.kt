@@ -4,6 +4,7 @@ import android.net.IpPrefix
 import android.net.VpnService
 import android.os.Build
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.core.routing.DirectRoutes
 import com.v2ray.ang.util.LogUtil
 import org.infradead.libopenconnect.LibOpenConnect
 import java.net.InetAddress
@@ -160,6 +161,7 @@ class CiscoEngine internal constructor(
 
     private fun establishTun(ip: IPInfo): Int? {
         val b = service.Builder().setBlocking(false).setSession(remarks.ifBlank { AppConfig.TAG })
+        val routes = DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(service) }.getOrDefault(emptyList()))
         try {
             val mtu = if (ip.MTU in 1000..1500) ip.MTU else 1400
             b.setMtu(mtu)
@@ -173,7 +175,7 @@ class CiscoEngine internal constructor(
 
             var dns = 0
             for (d in ip.DNS) {
-                runCatching { b.addDnsServer(d); dns++ }
+                runCatching { b.addDnsServer(d); routes.pin(d); dns++ }
             }
             if (dns == 0) {
                 b.addDnsServer("1.1.1.1")
@@ -182,12 +184,12 @@ class CiscoEngine internal constructor(
             ip.domain?.takeIf { it.isNotBlank() }?.let { runCatching { b.addSearchDomain(it) } }
 
             if (ip.splitIncludes.isEmpty()) {
-                b.addRoute("0.0.0.0", 0)
+                routes.addRoute("0.0.0.0", 0)
                 if (!v6.isNullOrBlank()) b.addRoute("::", 0)
             } else {
                 for (r in ip.splitIncludes) {
                     val (a, p) = splitCidr(r, null)
-                    runCatching { b.addRoute(a, p) }.onFailure { LogUtil.w(AppConfig.TAG, "Cisco route $r: ${it.message}") }
+                    runCatching { routes.addRoute(a, p) }.onFailure { LogUtil.w(AppConfig.TAG, "Cisco route $r: ${it.message}") }
                 }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -196,6 +198,7 @@ class CiscoEngine internal constructor(
                     runCatching { b.excludeRoute(IpPrefix(InetAddress.getByName(a), p)) }
                 }
             }
+            routes.apply()
             val pfd = b.establish() ?: return null
             return pfd.detachFd()
         } catch (t: Throwable) {
