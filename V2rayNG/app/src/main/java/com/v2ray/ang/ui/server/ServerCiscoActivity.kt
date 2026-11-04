@@ -9,7 +9,7 @@ import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.ui.compose.FormTextField
 
-/** Editor for Cisco AnyConnect profiles: server, port (443 by default), user name, password and an optional group. */
+/** Editor for Cisco AnyConnect profiles: server, port (typed in by the user), user name, password and an optional group. */
 class ServerCiscoActivity : BaseServerActivity() {
 
     override val serverConfigType: EConfigType = EConfigType.ANYCONNECT
@@ -17,9 +17,7 @@ class ServerCiscoActivity : BaseServerActivity() {
     @Composable
     override fun ScreenContent() {
         val uiState = rememberSaveable(saver = ServerUiState.Saver) {
-            ServerUiState.from(initialConfig = initialConfig).also {
-                if (initialConfig.serverPort.isNullOrBlank()) it.port = "443"
-            }
+            ServerUiState.from(initialConfig = initialConfig)
         }.apply {
             configType = serverConfigType
         }
