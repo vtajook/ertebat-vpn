@@ -76,10 +76,11 @@ class OpenVpnEngine(
     // ── tun builder ────────────────────────────────────────────────────────────────────────────
 
     override fun tun_builder_new(): Boolean {
-        val b = service?.Builder()?.setBlocking(false)
+        val svc = service
+        val b = svc?.Builder()?.setBlocking(false)
         builder = b
-        routes = if (b != null && service != null) {
-            DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(service) }.getOrDefault(emptyList()))
+        routes = if (b != null && svc != null) {
+            DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(svc) }.getOrDefault(emptyList()))
         } else null
         dnsAdded = false
         return true
