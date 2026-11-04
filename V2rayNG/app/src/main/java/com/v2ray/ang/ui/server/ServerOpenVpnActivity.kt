@@ -11,6 +11,7 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.fmt.OpenVpnFmt
+import com.v2ray.ang.ui.compose.FormDropdownField
 import com.v2ray.ang.ui.compose.FormTextField
 
 /** Editor for OpenVPN profiles: the `.ovpn` text plus the optional user name and password. */
@@ -19,6 +20,7 @@ class ServerOpenVpnActivity : BaseServerActivity() {
     override val serverConfigType: EConfigType = EConfigType.OPENVPN
 
     private var ovpnText: String = ""
+    private var protoChoice: String = "auto"
 
     @Composable
     override fun ScreenContent() {
@@ -29,6 +31,8 @@ class ServerOpenVpnActivity : BaseServerActivity() {
         }
         var text by rememberSaveable { mutableStateOf(initialConfig.ovpnConfig.orEmpty()) }
         ovpnText = text
+        var proto by rememberSaveable { mutableStateOf(initialConfig.ovpnProto ?: "auto") }
+        protoChoice = proto
 
         ServerEditorScaffold(
             title = serverConfigType.toString(),
@@ -56,6 +60,18 @@ class ServerOpenVpnActivity : BaseServerActivity() {
                 maxLines = 14,
                 placeholder = "client\ndev tun\nremote example.com 1194\n<ca>…</ca>"
             )
+            val labels = mapOf(
+                "auto" to stringResource(R.string.ovpn_proto_auto),
+                "udp" to "UDP",
+                "tcp" to "TCP",
+                "both" to stringResource(R.string.ovpn_proto_both),
+            )
+            FormDropdownField(
+                stringResource(R.string.server_lab_ovpn_proto),
+                labels[proto] ?: labels.getValue("auto"),
+                labels.values.toList(),
+                { chosen -> proto = labels.entries.firstOrNull { it.value == chosen }?.key ?: "auto" }
+            )
             FormTextField(
                 stringResource(R.string.server_lab_username),
                 uiState.username,
@@ -81,6 +97,7 @@ class ServerOpenVpnActivity : BaseServerActivity() {
             return false
         }
         config.ovpnConfig = text.trim() + "\n"
+        config.ovpnProto = protoChoice.takeIf { it != "auto" }
         config.mode = remote.third
         return true
     }

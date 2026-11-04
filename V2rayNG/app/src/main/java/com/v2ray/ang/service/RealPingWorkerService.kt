@@ -114,7 +114,8 @@ class RealPingWorkerService(
             // OpenVPN is not an Xray outbound: only the reachability of the server can be measured. UDP
             // servers cannot be probed by connecting, so they report a nominal value instead.
             val port = config.serverPort?.toIntOrNull() ?: return retFailure
-            return if (config.mode == "udp") OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
+            val udp = when (config.ovpnProto) { "udp", "both" -> true; "tcp" -> false; else -> config.mode == "udp" }
+            return if (udp) OpenVpnProbe.measure(config) else SpeedtestManager.socketConnectTime(config.server.orEmpty(), port, 3000)
         }
         if (config.configType == EConfigType.ANYCONNECT) {
             // AnyConnect is not an Xray outbound: the reachability of the HTTPS port is what can be measured
@@ -180,13 +181,13 @@ class RealPingWorkerService(
         val retFailure = -1L
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
-        if (config.configType == EConfigType.OPENVPN && config.mode == "udp") {
+        if (config.configType == EConfigType.OPENVPN && (config.ovpnProto == "udp" || config.ovpnProto == "both" || (config.ovpnProto != "tcp" && config.mode == "udp"))) {
             return OpenVpnProbe.measure(config)
         }
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD
-            && !(config.configType == EConfigType.OPENVPN && config.mode == "udp")
+            && !(config.configType == EConfigType.OPENVPN && (config.ovpnProto == "udp" || config.ovpnProto == "both" || (config.ovpnProto != "tcp" && config.mode == "udp")))
             && config.alpn?.split(',')?.all { it.trim().startsWith("h3") } != true
             && config.server.isNotNullEmpty()
             && config.serverPort?.toIntOrNull() != null

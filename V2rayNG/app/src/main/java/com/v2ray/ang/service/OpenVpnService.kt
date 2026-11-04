@@ -123,11 +123,20 @@ class OpenVpnService : VpnService() {
     private fun runSession(config: ProfileItem) {
         // Right after switching from another protocol the first attempt can be rejected (the previous
         // tunnel is still going down). One silent retry is what a manual reconnect did before.
-        var attempt = 1
+        // With "UDP + TCP" the session starts on UDP and moves to TCP when the server cannot be reached.
+        val both = config.ovpnProto == "both"
+        var proto: String? = if (both) "udp" else config.ovpnProto
+        var loginRetried = false
+        var switched = false
         while (true) {
-            val retry = runAttempt(config, attempt)
-            if (!retry || stopping.get()) break
-            attempt++
+            val outcome = runAttempt(config, proto, canRetryLogin = !loginRetried, canSwitch = both && !switched)
+            if (stopping.get() || outcome == Outcome.DONE) break
+            if (outcome == Outcome.RETRY_LOGIN) loginRetried = true
+            if (outcome == Outcome.SWITCH_TRANSPORT) {
+                switched = true
+                proto = "tcp"
+                LogUtil.i(AppConfig.TAG, "OpenVPN: UDP did not connect, trying TCP")
+            }
             try {
                 Thread.sleep(1500)
             } catch (_: InterruptedException) {
@@ -138,24 +147,33 @@ class OpenVpnService : VpnService() {
         if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
     }
 
-    /** @return true when the attempt ended with a failed login that is worth one more try. */
-    private fun runAttempt(config: ProfileItem, attempt: Int): Boolean {
-        var retryLogin = false
+    private enum class Outcome { DONE, RETRY_LOGIN, SWITCH_TRANSPORT }
+
+    private fun runAttempt(config: ProfileItem, proto: String?, canRetryLogin: Boolean, canSwitch: Boolean): Outcome {
+        var outcome = Outcome.DONE
         val listener = object : OpenVpnEngine.Listener {
             override fun onState(name: String, info: String) {
                 LogUtil.i(AppConfig.TAG, "OpenVPN event: $name $info")
                 when (name) {
                     "CONNECTED" -> onConnected()
                     "AUTH_FAILED" -> {
-                        if (attempt == 1 && !connected && !stopping.get()) {
-                            retryLogin = true
+                        if (canRetryLogin && !connected && !stopping.get()) {
+                            outcome = Outcome.RETRY_LOGIN
                             Thread({ runCatching { engine?.stop() } }, "ovpn-retry-stop").start()
                         } else {
                             fail("AUTH_FAILED: $info".trim(':', ' '))
                         }
                     }
-                    "CONNECTION_TIMEOUT", "CERT_VERIFY_FAIL", "TLS_VERSION_MIN", "CLIENT_HALT", "TUN_SETUP_FAILED",
-                    "PROXY_NEED_CREDS", "NEED_CREDS", "DYNAMIC_CHALLENGE" -> if (!retryLogin) fail("$name $info".trim())
+                    "CONNECTION_TIMEOUT" -> {
+                        if (canSwitch && !connected && !stopping.get()) {
+                            outcome = Outcome.SWITCH_TRANSPORT
+                            Thread({ runCatching { engine?.stop() } }, "ovpn-switch-stop").start()
+                        } else {
+                            fail("$name $info".trim())
+                        }
+                    }
+                    "CERT_VERIFY_FAIL", "TLS_VERSION_MIN", "CLIENT_HALT", "TUN_SETUP_FAILED",
+                    "PROXY_NEED_CREDS", "NEED_CREDS", "DYNAMIC_CHALLENGE" -> if (outcome == Outcome.DONE) fail("$name $info".trim())
                 }
             }
 
@@ -167,19 +185,19 @@ class OpenVpnService : VpnService() {
         val e = OpenVpnEngine(this, listener)
         engine = e
         try {
-            val error = e.configure(config.ovpnConfig.orEmpty(), config.username, config.password)
+            val error = e.configure(config.ovpnConfig.orEmpty(), config.username, config.password, proto)
             if (error != null) {
                 fail(error)
-                return false
+                return Outcome.DONE
             }
             val result = e.run()
-            if (retryLogin) return true
+            if (outcome != Outcome.DONE) return outcome
             if (!stopping.get() && result != null) fail(result)
         } catch (t: Throwable) {
             LogUtil.e(AppConfig.TAG, "OpenVPN session crashed", t)
             fail(t.message ?: t.javaClass.simpleName)
         }
-        return false
+        return Outcome.DONE
     }
 
     /** "Test" while connected: time of a small HTTP request that goes through the tunnel. */

@@ -40,7 +40,7 @@ class OpenVpnEngine(
     private var sessionName = AppConfigName
 
     /** Parses [ovpn] and applies the credentials. Returns an error text, or null when the config is usable. */
-    fun configure(ovpn: String, username: String?, password: String?): String? {
+    fun configure(ovpn: String, username: String?, password: String?, protoOverride: String? = null): String? {
         val config = ClientAPI_Config()
         config.content = ovpn
         config.tunPersist = false
@@ -49,6 +49,7 @@ class OpenVpnEngine(
         config.compressionMode = "asym"
         config.connTimeout = CONNECT_TIMEOUT_SECONDS
         config.retryOnAuthFailed = false
+        if (protoOverride == "udp" || protoOverride == "tcp") config.protoOverride = protoOverride
 
         val eval = eval_config(config)
         if (eval.error) return eval.message.ifBlank { "Invalid OpenVPN config" }

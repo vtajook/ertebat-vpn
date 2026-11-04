@@ -77,6 +77,9 @@ data class ProfileItem(
 
     /** Full `.ovpn` file of an OpenVPN profile (certificates and keys inline); stored encrypted. */
     var ovpnConfig: String? = null,
+
+    /** OpenVPN transport: null/"auto" = as in the file, "udp", "tcp", or "both" (UDP first, then TCP). */
+    var ovpnProto: String? = null,
 ) {
 
     companion object {

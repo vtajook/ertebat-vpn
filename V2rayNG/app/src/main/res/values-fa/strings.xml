@@ -579,6 +579,9 @@
     <string name="menu_item_import_config_manually_cisco">افزودن [Cisco AnyConnect]</string>
     <string name="server_lab_cisco_group">گروه (اختیاری)</string>
     <string name="server_lab_username">نام کاربری</string>
+    <string name="ovpn_proto_auto">خودکار (از روی فایل)</string>
+    <string name="ovpn_proto_both">UDP و TCP (اول UDP، بعد TCP)</string>
+    <string name="server_lab_ovpn_proto">پروتکل انتقال</string>
     <string name="server_lab_password">رمز عبور</string>
     <string name="server_lab_ovpn_config">کانفیگ OpenVPN (فایل ovpn)</string>
     <string name="toast_openvpn_config_invalid">کانفیگ OpenVPN معتبر نیست: خط remote لازم است</string>

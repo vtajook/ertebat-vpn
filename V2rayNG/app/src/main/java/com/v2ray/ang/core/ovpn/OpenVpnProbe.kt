@@ -41,7 +41,7 @@ object OpenVpnProbe {
         return try {
             val e = OpenVpnEngine(null, listener)
             engine = e
-            val error = e.configure(ovpn, profile.username, profile.password)
+            val error = e.configure(ovpn, profile.username, profile.password, profile.ovpnProto)
             if (error != null) {
                 LogUtil.w(AppConfig.TAG, "OpenVPN probe: $error")
                 return -1L
