@@ -64,6 +64,9 @@ android {
             signingConfig = signingConfigs.getByName("egnTest")
         }
         release {
+            // Test builds are optimised (not debuggable) builds signed with the fixed test key; real release
+            // signing passed by CI (APP_KEYSTORE_* secrets) overrides this.
+            signingConfig = signingConfigs.getByName("egnTest")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

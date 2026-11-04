@@ -27,8 +27,21 @@ object DirectRoutes {
         "192.0.0.0/24", "192.168.0.0/16", "198.18.0.0/15", "224.0.0.0/3",
     )
 
+    @Volatile
+    private var cache: Pair<String, List<LongRange>>? = null
+
     /** Ranges that must bypass the tunnel according to the enabled routing rules, merged and sorted. */
     fun directRanges(context: Context): List<LongRange> {
+        // Parsing geoip.dat takes a moment: keep the result while rules and the data file stay the same.
+        val geo = File(Utils.userAssetPath(context), AppConfig.GEOIP_DAT)
+        val signature = MmkvManager.decodeRoutingRulesets().orEmpty()
+            .filter { it.enabled && it.outboundTag == AppConfig.TAG_DIRECT }
+            .joinToString("|") { "${it.ip}/${it.port}" } + "#" + geo.length() + "@" + geo.lastModified()
+        cache?.let { if (it.first == signature) return it.second }
+        return computeDirectRanges(context).also { cache = signature to it }
+    }
+
+    private fun computeDirectRanges(context: Context): List<LongRange> {
         val rules = MmkvManager.decodeRoutingRulesets().orEmpty()
             .filter { it.enabled && it.outboundTag == AppConfig.TAG_DIRECT && !it.ip.isNullOrEmpty() && it.port.isNullOrEmpty() }
         if (rules.isEmpty()) return emptyList()

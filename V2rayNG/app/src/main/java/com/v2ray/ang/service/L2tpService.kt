@@ -131,16 +131,25 @@ class L2tpService : VpnService() {
             }
         }
         try {
-            var error: String? = null
+            var error: String?
+            var quickFailures = 0
             do {
                 val e = L2tpEngine(
                     this, config.remarks, config.username.orEmpty(), config.password.orEmpty(),
                     config.preSharedKey.orEmpty(), listener
                 )
                 engine = e
+                val started = System.currentTimeMillis()
                 error = e.run(config.server.orEmpty(), 0)
-                // the IPsec SA lives one hour: renegotiate silently
-            } while (!stopping.get() && e.expired)
+                // The IPsec SA lives one hour (renegotiate silently); a link that dropped after it had been
+                // up (network change, server hiccup) is re-established a few times before giving up.
+                val lasted = System.currentTimeMillis() - started
+                if (lasted > 60_000) quickFailures = 0
+                val again = !stopping.get() && (e.expired || (e.wasConnected && error != null && ++quickFailures <= 5))
+                if (!again) break
+                LogUtil.w(AppConfig.TAG, "L2TP: reconnecting (${error ?: "SA lifetime"})")
+                try { Thread.sleep(1500) } catch (_: InterruptedException) { break }
+            } while (!stopping.get())
             if (!stopping.get() && error != null) fail(error)
         } catch (t: Throwable) {
             LogUtil.e(AppConfig.TAG, "L2TP/IPsec session crashed", t)

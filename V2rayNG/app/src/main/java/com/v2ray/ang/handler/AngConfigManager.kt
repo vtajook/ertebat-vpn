@@ -159,6 +159,10 @@ object AngConfigManager {
     private fun shareConfig(guid: String): String {
         try {
             val config = MmkvManager.decodeServerConfig(guid) ?: return ""
+            // These profiles have no share link format (and carry credentials / a whole .ovpn file)
+            if (config.configType == EConfigType.OPENVPN || config.configType == EConfigType.ANYCONNECT ||
+                config.configType == EConfigType.L2TP
+            ) return ""
 
             return config.configType.protocolScheme + when (config.configType) {
                 EConfigType.VMESS -> VmessFmt.toUri(config)

@@ -174,13 +174,13 @@ jobs:
           -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
           -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
 
-    - name: Build debug-signed APKs (no keystore secrets set)
+    - name: Build test-signed release APKs (no keystore secrets set)
       if: steps.signing.outputs.has_keystore != 'true'
       run: |
         cd ${{ github.workspace }}/V2rayNG
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
-        ./gradlew assemblePlaystoreDebug
+        ./gradlew assemblePlaystoreRelease
 
     - name: Upload APKs
       uses: actions/upload-artifact@v7
@@ -202,7 +202,7 @@ jobs:
             --title "${{ inputs.release_tag }}" --generate-notes
         else
           # no keystore secrets: debug-signed build, published as a pre-release for testing only
-          gh release create "${{ inputs.release_tag }}" $APK_DIR/debug/*.apk \
+          gh release create "${{ inputs.release_tag }}" $APK_DIR/release/*.apk \
             --title "${{ inputs.release_tag }} (test build)" --prerelease \
-            --notes "Debug-signed test build. Add the keystore secrets for release-signed builds."
+            --notes "Test-signed build (public test key). Add the keystore secrets for release-signed builds."
         fi

@@ -39,6 +39,10 @@ class L2tpEngine(
     @Volatile var expired = false
         private set
 
+    /** True once the tunnel has been up at least once in this session. */
+    @Volatile var wasConnected = false
+        private set
+
     private val stopped = AtomicBoolean(false)
     @Volatile private var tun: ParcelFileDescriptor? = null
     @Volatile private var socket: java.net.DatagramSocket? = null
@@ -100,6 +104,7 @@ class L2tpEngine(
             val input = FileInputStream(pfd.fileDescriptor)
             tunOut = FileOutputStream(pfd.fileDescriptor)
             val startedAt = System.currentTimeMillis()
+            wasConnected = true
             listener.onConnected()
 
             val tunThread = Thread({
