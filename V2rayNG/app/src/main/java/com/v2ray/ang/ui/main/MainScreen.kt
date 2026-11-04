@@ -202,6 +202,10 @@ fun MainScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+                    val liveStats = uiState.stats
+                    if (isRunning && liveStats != null) {
+                        ConnectionStatsCard(liveStats)
+                    }
                     if (groups.size > 1) {
                         GroupTabBar(
                             groups = groups,

@@ -13,9 +13,11 @@ import androidx.core.app.NotificationCompat
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.CoreServiceManager
+import com.v2ray.ang.dto.TrafficSnapshot
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.toSpeedString
+import com.v2ray.ang.helper.MessageHelper
 import com.v2ray.ang.helper.NotificationHelper
 import com.v2ray.ang.ui.main.MainActivity
 import com.v2ray.ang.util.LogUtil
@@ -32,20 +34,29 @@ object NotificationManager {
     private const val NOTIFICATION_PENDING_INTENT_STOP_V2RAY = 1
     private const val NOTIFICATION_PENDING_INTENT_RESTART_V2RAY = 2
     private const val NOTIFICATION_ICON_THRESHOLD = 3000
-    private const val QUERY_INTERVAL_MS = 3000L
+    private const val QUERY_INTERVAL_MS = 1000L
 
     private var lastQueryTime = 0L
     private var mBuilder: NotificationCompat.Builder? = null
     private var speedNotificationJob: Job? = null
     private var mNotificationManager: NotificationManager? = null
 
+    // Session counters for the main screen (proxy traffic only), reset when the loop starts.
+    private var sessionUp = 0L
+    private var sessionDown = 0L
+    private var sessionStartMs = 0L
+
     /**
      * Starts the speed notification.
      * @param currentConfig The current profile configuration.
      */
     fun startSpeedNotification() {
-        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED) != true) return
+        // The loop always runs: it feeds the main screen stats; the notification text is optional.
         if (speedNotificationJob != null || CoreServiceManager.isRunning() == false) return
+
+        sessionUp = 0L
+        sessionDown = 0L
+        sessionStartMs = System.currentTimeMillis()
 
         var lastZeroSpeed = false
 
@@ -266,7 +277,25 @@ object NotificationManager {
         val proxyTotal = proxyUplink + proxyDownlink
         val directTotal = directUplink + directDownlink
         val zeroSpeed = proxyTotal + directTotal == 0L
-        if (!zeroSpeed || !lastZeroSpeed) {
+
+        sessionUp += proxyUplink
+        sessionDown += proxyDownlink
+        getService()?.let { service ->
+            MessageHelper.sendMsg2UI(
+                service,
+                AppConfig.MSG_STATS,
+                TrafficSnapshot(
+                    upSpeed = (proxyUplink / sinceLastQueryInSeconds).toLong(),
+                    downSpeed = (proxyDownlink / sinceLastQueryInSeconds).toLong(),
+                    totalUp = sessionUp,
+                    totalDown = sessionDown,
+                    connectedSinceMs = sessionStartMs,
+                )
+            )
+        }
+
+        val speedInNotification = MmkvManager.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED) == true
+        if (speedInNotification && (!zeroSpeed || !lastZeroSpeed)) {
             val text = StringBuilder()
             appendSpeedString(
                 text, AppConfig.TAG_PROXY,

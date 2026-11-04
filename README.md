@@ -1,6 +1,6 @@
-# Ertebat Goostar VPN
+# EGN VPN (Ertebat Goostar / ارتباط گستر)
 
-Branded Android VPN client for Ertebat Goostar (ارتباط گستر).
+Branded Android VPN client **EGN VPN** by Ertebat Goostar (ارتباط گستر).
 
 - Telegram bot: @egnvpnbot
 - Channel: https://t.me/ErtebatGvpn
@@ -16,7 +16,17 @@ Based on open-source projects; licensed under GPL-3.0.
 | SSH | ✅ (new, untested on device) | `ssh://user:pass@host:port#name`; login with sshj, traffic carried through a local SOCKS5 proxy (`direct-tcpip`) into the same tunnel. TCP only (SSH cannot carry UDP); the server must allow TCP forwarding |
 | OpenVPN | ⏳ not yet | needs a separate native OpenVPN engine, see below |
 
-Import works from clipboard, local file and QR scan.
+Import works from clipboard, local file and QR scan. The QR/clipboard importer recognises the protocol
+from the link scheme or file content (`vless://`, `vmess://`, `ssh://`, `wireguard://`, WireGuard `.conf`, …)
+and picks the matching parser itself.
+
+## Features
+
+- Multiple configs, groups and subscriptions; quick connect / disconnect; TCP ping and real ping.
+- Live session card on the main screen: download and upload speed, data used, time connected.
+- Secure storage: every config store is encrypted (MMKV) with a random key that is itself encrypted by
+  an Android Keystore key; app backup is turned off and the in-app backup/restore entry is hidden,
+  because raw storage files cannot be read on another device.
 
 ## Building
 

@@ -145,6 +145,10 @@ class MainViewModel(
             }
 
             MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            is MainServiceEvent.Stats -> _uiState.update { state ->
+                // late snapshots after a stop must not bring the card back
+                if (state.isRunning) state.copy(stats = event.snapshot) else state
+            }
             is MainServiceEvent.MeasureDelayResult -> {
                 if (!uiState.value.isRunning || !testRequests.completeCurrent(event.requestId)) return
                 _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
@@ -934,6 +938,7 @@ class MainViewModel(
         _uiState.update { state ->
             state.copy(
                 isRunning = running,
+                stats = if (running) state.stats else null,
                 isTesting = testRequests.isTesting,
                 status = if (!clearTestingText && state.isRunning == running) state.status
                 else if (running) MainStatus.Connected else MainStatus.Disconnected

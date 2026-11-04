@@ -59,7 +59,8 @@ private val drawerItems = primaryDrawerItems + listOf(
     MainDestination.Promotion,
     MainDestination.Logcat,
     MainDestination.CheckUpdate,
-    MainDestination.BackupRestore,
+    // Backup/restore copies the raw (now Keystore-encrypted) storage files, which cannot be read on
+    // another device, so the entry is not offered.
     MainDestination.About
 )
 

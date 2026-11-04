@@ -69,13 +69,20 @@ object MmkvManager {
         ) = Unit
     }
 
-    private val mainStorage by lazy { MMKV.mmkvWithID(ID_MAIN, MMKV.MULTI_PROCESS_MODE) }
-    private val profileFullStorage by lazy { MMKV.mmkvWithID(ID_PROFILE_FULL_CONFIG, MMKV.MULTI_PROCESS_MODE) }
-    private val serverRawStorage by lazy { MMKV.mmkvWithID(ID_SERVER_RAW, MMKV.MULTI_PROCESS_MODE) }
-    private val serverAffStorage by lazy { MMKV.mmkvWithID(ID_SERVER_AFF, MMKV.MULTI_PROCESS_MODE) }
-    private val subStorage by lazy { MMKV.mmkvWithID(ID_SUB, MMKV.MULTI_PROCESS_MODE) }
-    private val assetStorage by lazy { MMKV.mmkvWithID(ID_ASSET, MMKV.MULTI_PROCESS_MODE) }
-    private val settingsStorage by lazy { MMKV.mmkvWithID(ID_SETTING, MMKV.MULTI_PROCESS_MODE) }
+    // Set in initialize(), which every process calls from Application.onCreate before any store is used.
+    private lateinit var appContext: Context
+
+    /** Every store is encrypted with the Keystore-protected key (see [StorageKeyProvider]). */
+    private fun openStore(id: String): MMKV =
+        MMKV.mmkvWithID(id, MMKV.MULTI_PROCESS_MODE, StorageKeyProvider.getKey(appContext))
+
+    private val mainStorage by lazy { openStore(ID_MAIN) }
+    private val profileFullStorage by lazy { openStore(ID_PROFILE_FULL_CONFIG) }
+    private val serverRawStorage by lazy { openStore(ID_SERVER_RAW) }
+    private val serverAffStorage by lazy { openStore(ID_SERVER_AFF) }
+    private val subStorage by lazy { openStore(ID_SUB) }
+    private val assetStorage by lazy { openStore(ID_ASSET) }
+    private val settingsStorage by lazy { openStore(ID_SETTING) }
 
     private inline fun <T> withProfileIndexLock(block: () -> T): T {
         return synchronized(mainStorage) {
@@ -135,6 +142,7 @@ object MmkvManager {
      * Initializes MMKV with best-effort recovery so a damaged store is not silently discarded.
      */
     fun initialize(context: Context) {
+        appContext = context.applicationContext
         val logLevel = if (BuildConfig.DEBUG) {
             MMKVLogLevel.LevelDebug
         } else {
