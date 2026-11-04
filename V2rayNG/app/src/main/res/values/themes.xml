@@ -1,11 +1,11 @@
 <resources>
-    <color name="window_background_light">#FFFFFFFF</color>
-    <color name="window_background_dark">#FF1C1B1F</color>
+    <color name="window_background_light">#FF0A0B0F</color>
+    <color name="window_background_dark">#FF0A0B0F</color>
 
-    <style name="AppThemeBaseCommon" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="AppThemeBaseCommon" parent="Theme.AppCompat.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowBackground">@color/window_background_light</item>
     </style>
 

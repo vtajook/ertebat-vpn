@@ -587,4 +587,18 @@
     <string name="toast_openvpn_config_invalid">کانفیگ OpenVPN معتبر نیست: خط remote لازم است</string>
     <string name="menu_item_import_config_manually_l2tp">افزودن [L2TP/IPsec]</string>
     <string name="server_lab_l2tp_psk">کلید مشترک IPsec (Secret)</string>
+    <string name="egn_nav_home">خانه</string>
+    <string name="egn_nav_servers">سرورها</string>
+    <string name="egn_nav_ping">تست پینگ</string>
+    <string name="egn_nav_logs">گزارش‌ها</string>
+    <string name="egn_nav_settings">تنظیمات</string>
+    <string name="egn_home_connected">متصل</string>
+    <string name="egn_home_disconnected">قطع</string>
+    <string name="egn_home_connect">اتصال</string>
+    <string name="egn_home_disconnect">قطع اتصال</string>
+    <string name="egn_home_ping">تأخیر</string>
+    <string name="egn_ping_latency">تأخیر</string>
+    <string name="egn_ping_start">شروع تست</string>
+    <string name="egn_ping_stop">توقف تست</string>
+    <string name="egn_ping_results">نتایج اخیر</string>
 </resources>

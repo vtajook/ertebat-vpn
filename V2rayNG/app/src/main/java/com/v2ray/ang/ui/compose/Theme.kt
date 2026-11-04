@@ -1,15 +1,16 @@
 package com.v2ray.ang.ui.compose
 
 import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.v2ray.ang.R
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
@@ -18,7 +19,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.v2ray.ang.AppConfig
@@ -27,89 +27,93 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-private val LightColor = lightColorScheme(
-    primary = Color(0xFF0D47A1), // Ertebat blue
-    onPrimary = Color(0xFFFFFFFF), // White
-    primaryContainer = Color(0xFFD6E4FF), // Pale blue
-    onPrimaryContainer = Color(0xFF001B3E), // Navy
-    secondary = Color(0xFF00ACC1), // Cyan
-    onSecondary = Color(0xFFFFFFFF), // White
-    secondaryContainer = Color(0xFFB2EBF2), // Pale cyan
-    onSecondaryContainer = Color(0xFF00363D), // Dark teal
-    tertiary = Color(0xFF009966), // Green
-    onTertiary = Color(0xFFFFFFFF), // White
-    tertiaryContainer = Color(0xFFA0F2D0), // Light Green
-    onTertiaryContainer = Color(0xFF00201A), // Dark Teal
-    error = Color(0xFFBA1A1A), // Red
-    errorContainer = Color(0xFFFFDAD6), // Light Red
-    onError = Color(0xFFFFFFFF), // White
-    onErrorContainer = Color(0xFF410002), // Dark Red
-    background = Color(0xFFFFFFFF), // White
-    onBackground = Color(0xFF1C1B1F), // Near Black
-    surface = Color(0xFFFFFFFF), // White
-    onSurface = Color(0xFF1C1B1F), // Near Black
-    surfaceVariant = Color(0xFFE7E0EC), // Light Purple Gray
-    onSurfaceVariant = Color(0xFF49454F), // Dark Gray
-    outline = Color(0xFF79747E), // Medium Gray
-    outlineVariant = Color(0xFFCAC4D0), // Light Gray
-    inverseSurface = Color(0xFF313033), // Dark Gray
-    inverseOnSurface = Color(0xFFF4EFF4), // Very Light Gray
-    inversePrimary = Color(0xFF90CAF9), // Light blue
-    scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFF0D47A1), // Ertebat blue
-    surfaceContainerLowest = Color(0xFFFFFFFF), // White
-    surfaceContainerLow = Color(0xFFF7F7F7), // Very Light Gray
-    surfaceContainer = Color(0xFFF1F1F1), // Light Gray
-    surfaceContainerHigh = Color(0xFFEBEBEB), // Light Gray
-    surfaceContainerHighest = Color(0xFFE5E5E5), // Light Gray
-)
+// EGN VPN "Dark Cyber Red" design tokens
+val colorBackground = Color(0xFF0A0B0F)
+val colorSurface = Color(0xFF121720)
+val colorSurfaceElevated = Color(0xFF1A222D)
+val colorDivider = Color(0xFF26313D)
+val colorTextPrimary = Color(0xFFF4F7FB)
+val colorTextSecondary = Color(0xFFAAB4C2)
+val colorTextMuted = Color(0xFF778391)
+val colorBrand = Color(0xFFFF2638)
+val colorBrandBright = Color(0xFFFF4050)
+val colorSuccess = Color(0xFF00D68F)
+val colorWarning = Color(0xFFFFB547)
+val colorError = Color(0xFFFF5964)
+val colorInfo = Color(0xFF35BDF2)
+val colorNoResponse = Color(0xFF8993A1)
 
 private val DarkColor = darkColorScheme(
-    primary = Color(0xFF90CAF9), // Light blue
-    onPrimary = Color(0xFF003258), // Navy
-    primaryContainer = Color(0xFF0D3B73), // Deep blue
-    onPrimaryContainer = Color(0xFFD6E4FF), // Pale blue
-    secondary = Color(0xFF4DD0E1), // Cyan
-    onSecondary = Color(0xFF00363D), // Dark teal
-    secondaryContainer = Color(0xFF004F58), // Teal
-    onSecondaryContainer = Color(0xFFB2EBF2), // Pale cyan
-    tertiary = Color(0xFF83D6B5), // Mint Green
-    onTertiary = Color(0xFF00382E), // Dark Teal
-    tertiaryContainer = Color(0xFF005143), // Teal
-    onTertiaryContainer = Color(0xFFA0F2D0), // Light Green
-    error = Color(0xFFFFB4AB), // Light Red
-    errorContainer = Color(0xFF93000A), // Dark Red
-    onError = Color(0xFF690005), // Deep Red
-    onErrorContainer = Color(0xFFFFDAD6), // Light Red
-    background = Color(0xFF1C1B1F), // Near Black
-    onBackground = Color(0xFFE6E1E5), // Light Gray
-    surface = Color(0xFF1C1B1F), // Near Black
-    onSurface = Color(0xFFE6E1E5), // Light Gray
-    surfaceVariant = Color(0xFF49454F), // Dark Gray
-    onSurfaceVariant = Color(0xFFCAC4D0), // Light Gray
-    outline = Color(0xFF938F99), // Grayish Purple
-    outlineVariant = Color(0xFF49454F), // Dark Gray
-    inverseSurface = Color(0xFFE6E1E5), // Light Gray
-    inverseOnSurface = Color(0xFF1C1B1F), // Near Black
-    inversePrimary = Color(0xFF0D47A1), // Ertebat blue
-    scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFF90CAF9), // Light blue
-    surfaceContainerLowest = Color(0xFF0F0F12), // Near Black
-    surfaceContainerLow = Color(0xFF1A191D), // Dark Gray
-    surfaceContainer = Color(0xFF1E1D21), // Dark Gray
-    surfaceContainerHigh = Color(0xFF282729), // Dark Gray
-    surfaceContainerHighest = Color(0xFF333234), // Dark Gray
+    primary = colorBrand,
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF3A0E14),
+    onPrimaryContainer = Color(0xFFFFD9DC),
+    secondary = colorBrandBright,
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = colorSurfaceElevated,
+    onSecondaryContainer = colorTextPrimary,
+    tertiary = colorSuccess,
+    onTertiary = Color(0xFF00382A),
+    tertiaryContainer = Color(0xFF0B3A2C),
+    onTertiaryContainer = Color(0xFFB7F5DF),
+    error = colorError,
+    errorContainer = Color(0xFF3A1015),
+    onError = Color(0xFFFFFFFF),
+    onErrorContainer = Color(0xFFFFD9DC),
+    background = colorBackground,
+    onBackground = colorTextPrimary,
+    surface = Color(0xFF0E1218),
+    onSurface = colorTextPrimary,
+    surfaceVariant = colorSurfaceElevated,
+    onSurfaceVariant = colorTextSecondary,
+    outline = colorTextMuted,
+    outlineVariant = colorDivider,
+    inverseSurface = colorTextPrimary,
+    inverseOnSurface = colorBackground,
+    inversePrimary = colorBrand,
+    scrim = Color(0xFF000000),
+    surfaceTint = colorBrand,
+    surfaceContainerLowest = colorBackground,
+    surfaceContainerLow = Color(0xFF0E1218),
+    surfaceContainer = colorSurface,
+    surfaceContainerHigh = colorSurfaceElevated,
+    surfaceContainerHighest = Color(0xFF212B38),
 )
 
 // Semantic Colors
-val colorPing = Color(0xFF009966) // Green
-val colorPingRed = Color(0xFFFF0099) // Pink Red
-val colorConfigType = Color(0xFF0288D1) // Blue
-val colorFabActive = Color(0xFF00ACC1) // Cyan
-val colorFabInactiveLight = Color(0xFF9C9C9C) // Gray
-val colorFabInactiveDark = Color(0xFF646464) // Dark Gray
-val dividerColorLight = Color(0xFFE0E0E0) // Light Gray
-val dividerColorDark = Color(0xFF424242) // Dark Gray
+val colorPing = colorSuccess
+val colorPingRed = colorError
+val colorConfigType = colorInfo
+val colorFabActive = colorBrand
+val colorFabInactiveLight = colorDivider
+val colorFabInactiveDark = colorDivider
+val dividerColorLight = colorDivider
+val dividerColorDark = colorDivider
+
+/** Colour of a delay value: 0-80 ms good, 81-150 ms medium, above that poor, negative = no answer. */
+fun pingColor(delayMillis: Long): Color = when {
+    delayMillis < 0L -> colorNoResponse
+    delayMillis <= 80L -> colorSuccess
+    delayMillis <= 150L -> colorWarning
+    else -> colorError
+}
+
+private val Vazirmatn = FontFamily(
+    Font(R.font.vazirmatn_regular, FontWeight.Normal),
+    Font(R.font.vazirmatn_medium, FontWeight.Medium),
+    Font(R.font.vazirmatn_bold, FontWeight.Bold),
+)
+
+private val AppTypography = Typography().let { t ->
+    fun TextStyle.vz() = copy(fontFamily = Vazirmatn)
+    Typography(
+        displayLarge = t.displayLarge.vz(), displayMedium = t.displayMedium.vz(), displaySmall = t.displaySmall.vz(),
+        headlineLarge = t.headlineLarge.vz(), headlineMedium = t.headlineMedium.vz(), headlineSmall = t.headlineSmall.vz(),
+        titleLarge = t.titleLarge.vz(), titleMedium = t.titleMedium.vz(), titleSmall = t.titleSmall.vz(),
+        bodyLarge = t.bodyLarge.vz(), bodyMedium = t.bodyMedium.vz(), bodySmall = t.bodySmall.vz(),
+        labelLarge = t.labelLarge.vz(), labelMedium = t.labelMedium.vz(), labelSmall = t.labelSmall.vz(),
+    )
+}
 
 // Toast Colors 85%
 val toastNormalBgLight = Color(0xD9353A3E) // Dark Gray
@@ -151,12 +155,8 @@ object ThemeManager {
 
 @Composable
 fun resolveDarkTheme(): Boolean {
-    val mode by ThemeManager.themeMode.collectAsState()
-    return when (mode) {
-        "1" -> false
-        "2" -> true
-        else -> isSystemInDarkTheme()
-    }
+    // EGN VPN has one look: the Dark Cyber Red theme.
+    return true
 }
 
 val LocalDarkTheme = compositionLocalOf { false }
@@ -166,16 +166,7 @@ fun AppTheme(
     darkTheme: Boolean = resolveDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
-    val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColor
-        else -> LightColor
-    }
+    val colorScheme = DarkColor
     val snackbarController = rememberAppSnackbarController()
 
     val view = LocalView.current
@@ -195,7 +186,8 @@ fun AppTheme(
         LocalAppSnackbar provides snackbarController
     ) {
         MaterialTheme(
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            typography = AppTypography
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 AppSnackbarBridge(controller = snackbarController)

@@ -18,6 +18,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
@@ -59,7 +62,8 @@ fun MainScreen(
     val confirmRemove = uiState.confirmRemove
     val shareQRCodeBitmap = uiState.shareQRCodeBitmap
 
-    val isDarkTheme = LocalDarkTheme.current
+    var tabName by rememberSaveable { mutableStateOf(MainTab.Home.name) }
+    val tab = MainTab.entries.firstOrNull { it.name == tabName } ?: MainTab.Home
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showSearch by remember { mutableStateOf(false) }
@@ -170,7 +174,13 @@ fun MainScreen(
             containerColor = Color.Transparent,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
-                MainTopBar(
+                if (tab != MainTab.Servers) {
+                    EgnTopBar(
+                        title = stringResource(if (tab == MainTab.Home) R.string.egn_app_title else R.string.egn_nav_ping),
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onSettingsClick = if (tab == MainTab.Home) ({ onNavigate(MainDestination.Settings) }) else null,
+                    )
+                } else MainTopBar(
                     isLoading = isLoading,
                     showSearch = showSearch,
                     searchQuery = searchQuery,
@@ -203,27 +213,57 @@ fun MainScreen(
                 )
             },
             bottomBar = {
-                MainBottomBar(
-                    displayText = displayText,
-                    isRunning = isRunning,
-                    isDarkTheme = isDarkTheme,
-                    onAction = onAction
+                MainNavBar(
+                    selected = tab,
+                    onSelect = { target ->
+                        when (target) {
+                            MainTab.Logs -> onNavigate(MainDestination.Logcat)
+                            MainTab.Settings -> onNavigate(MainDestination.Settings)
+                            else -> tabName = target.name
+                        }
+                    }
                 )
             },
-            floatingActionButton = {},
+            floatingActionButton = {
+                if (tab == MainTab.Servers) {
+                    FloatingActionButton(
+                        onClick = { onAction(MainAction.ToggleService) },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White,
+                    ) {
+                        Icon(
+                            painter = painterResource(if (isRunning) R.drawable.ic_stop_24dp else R.drawable.ic_play_24dp),
+                            contentDescription = stringResource(if (isRunning) R.string.acc_stop else R.string.acc_start),
+                        )
+                    }
+                }
+            },
         ) { innerPadding ->
             val layoutDirection = LocalLayoutDirection.current
 
-            if (groups.isNotEmpty()) {
+            if (tab == MainTab.Home) {
+                HomeContent(
+                    uiState = uiState,
+                    statusText = displayText,
+                    onToggle = { onAction(MainAction.ToggleService) },
+                    modifier = Modifier.padding(innerPadding),
+                )
+            } else if (tab == MainTab.Ping) {
+                val pingRows by mainViewModel.serverGroupState(uiState.selectedGroupId).collectAsStateWithLifecycle()
+                PingContent(
+                    rows = pingRows.rows,
+                    selectedGuid = selectedGuid,
+                    isTesting = uiState.isTesting,
+                    onStart = { onAction(MainAction.TestRealAllServers) },
+                    onStop = { onAction(MainAction.CancelTesting) },
+                    modifier = Modifier.padding(innerPadding),
+                )
+            } else if (groups.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    val liveStats = uiState.stats
-                    if (isRunning && liveStats != null) {
-                        ConnectionStatsCard(liveStats)
-                    }
                     if (groups.size > 1) {
                         GroupTabBar(
                             groups = groups,
