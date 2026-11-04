@@ -40,7 +40,6 @@ import com.v2ray.ang.ui.server.ServerHysteria2Activity
 import com.v2ray.ang.ui.server.ServerProxyChainActivity
 import com.v2ray.ang.ui.server.ServerShadowsocksActivity
 import com.v2ray.ang.ui.server.ServerSocksActivity
-import com.v2ray.ang.ui.events.EventsActivity
 import com.v2ray.ang.ui.server.ServerCiscoActivity
 import com.v2ray.ang.ui.server.ServerL2tpActivity
 import com.v2ray.ang.ui.server.ServerOpenVpnActivity
@@ -157,7 +156,6 @@ class MainActivity : HelperBaseComponentActivity() {
             MainDestination.UserAssets -> Intent(this, UserAssetActivity::class.java)
             MainDestination.Settings -> Intent(this, SettingsActivity::class.java)
             MainDestination.Logcat -> Intent(this, LogcatActivity::class.java)
-            MainDestination.Events -> Intent(this, EventsActivity::class.java)
             MainDestination.CheckUpdate -> Intent(this, CheckUpdateActivity::class.java)
             MainDestination.BackupRestore -> Intent(this, BackupActivity::class.java)
             MainDestination.About -> Intent(this, AboutActivity::class.java)

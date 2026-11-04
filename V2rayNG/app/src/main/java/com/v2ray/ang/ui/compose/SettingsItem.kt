@@ -1,11 +1,6 @@
 package com.v2ray.ang.ui.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,11 +35,10 @@ fun PreferenceGroupHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = MaterialTheme.colorScheme.secondary,
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
     )
 }
 
@@ -97,11 +91,8 @@ private fun SettingsItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
             .then(if (onClick != null) Modifier.clickable(enabled = enabled, onClick = onClick) else Modifier)
-            .padding(14.dp),
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -267,8 +258,8 @@ fun SettingsSwitchItem(
                 onCheckedChange = if (enabled) onCheckedChange else null,
                 modifier = Modifier.scale(0.8f),
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary
+                    checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
+                    checkedTrackColor = MaterialTheme.colorScheme.secondary
                 ),
                 enabled = enabled
             )

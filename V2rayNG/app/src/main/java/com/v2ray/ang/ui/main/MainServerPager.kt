@@ -1,11 +1,7 @@
 package com.v2ray.ang.ui.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,10 +57,12 @@ import com.v2ray.ang.R
 import com.v2ray.ang.dto.LocateTarget
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.SubscriptionUsageInfo
+import com.v2ray.ang.ui.compose.ItemDivider
 import com.v2ray.ang.ui.compose.ReorderableGridItem
 import com.v2ray.ang.ui.compose.ReorderableListItem
 import com.v2ray.ang.ui.compose.colorConfigType
-import com.v2ray.ang.ui.compose.pingColor
+import com.v2ray.ang.ui.compose.colorPing
+import com.v2ray.ang.ui.compose.colorPingRed
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
@@ -259,6 +257,7 @@ private fun ServerListPage(
                                 actions = actions
                             )
                         }
+                        ItemDivider()
                     }
                 } else {
                     ServerItemRow(
@@ -266,6 +265,7 @@ private fun ServerListPage(
                         isSelected = row.guid == selectedGuid,
                         actions = actions
                     )
+                    ItemDivider()
                 }
             }
         }
@@ -332,6 +332,7 @@ private fun ServerItemColumn(
             doubleColumnDisplay = doubleColumnDisplay,
             actions = actions
         )
+        ItemDivider()
     }
 }
 
@@ -342,28 +343,19 @@ private fun ServerListItem(
     doubleColumnDisplay: Boolean,
     actions: ServerRowActions
 ) {
-    val testResult = when {
-        row.testDelayMillis == 0L -> ""
-        row.testDelayMillis < 0L -> "\u2014"
-        else -> stringResource(R.string.server_test_delay_value, row.testDelayMillis)
+    val testResult = if (row.testDelayMillis == 0L) {
+        ""
+    } else {
+        stringResource(R.string.server_test_delay_value, row.testDelayMillis)
     }
     val selectedStateDescription = if (isSelected) {
         stringResource(R.string.acc_selected_server)
     } else {
         null
     }
-    val cardShape = RoundedCornerShape(16.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 5.dp)
-            .clip(cardShape)
-            .background(if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                shape = cardShape
-            )
             .height(IntrinsicSize.Min)
             .semantics {
                 if (selectedStateDescription != null) {
@@ -372,7 +364,24 @@ private fun ServerListItem(
             }
             .clickable { actions.select(row.guid) }
     ) {
-        Spacer(Modifier.width(4.dp))
+        Box(
+            Modifier
+                .width(10.dp)
+                .fillMaxHeight()
+        ) {
+            if (isSelected) {
+                Row {
+                    Spacer(Modifier.width(6.dp))
+                    Box(
+                        Modifier
+                            .width(4.dp)
+                            .fillMaxHeight()
+                            .padding(vertical = 10.dp)
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            }
+        }
 
         Column(
             Modifier
@@ -428,10 +437,7 @@ private fun ServerListItem(
                 Text(
                     row.statistics,
                     Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        textDirection = TextDirection.Ltr,
-                        textAlign = TextAlign.Start
-                    ),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -441,11 +447,7 @@ private fun ServerListItem(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
                     row.typeDescription,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(colorConfigType.copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorConfigType,
                     maxLines = 1,
@@ -455,7 +457,7 @@ private fun ServerListItem(
                 Text(
                     testResult,
                     style = MaterialTheme.typography.bodySmall,
-                    color = pingColor(row.testDelayMillis),
+                    color = if (row.testDelayMillis < 0L) colorPingRed else colorPing,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
