@@ -92,10 +92,7 @@ class ServerOpenVpnActivity : BaseServerActivity() {
             toast(R.string.toast_openvpn_config_invalid)
             return false
         }
-        if (OpenVpnFmt.needsCredentials(text) && (config.username.isNullOrBlank() || config.password.isNullOrBlank())) {
-            toast(R.string.toast_ssh_credentials_required)
-            return false
-        }
+        // user name / password may stay empty: they can be part of the file or not needed at all
         config.ovpnConfig = text.trim() + "\n"
         config.ovpnProto = protoChoice.takeIf { it != "auto" }
         config.mode = remote.third
