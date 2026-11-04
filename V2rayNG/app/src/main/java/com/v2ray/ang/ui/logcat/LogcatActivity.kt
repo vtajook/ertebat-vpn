@@ -242,10 +242,10 @@ private fun LogcatItem(log: String, onLongClick: () -> Unit) {
             .combinedClickable(onClick = {}, onLongClick = onLongClick)
             .padding(8.dp)
     ) {
-        Text(text = tag, style = MaterialTheme.typography.bodySmall)
+        Text(text = tag, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
         if (content.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = content, style = MaterialTheme.typography.bodySmall)
+            Text(text = content, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
