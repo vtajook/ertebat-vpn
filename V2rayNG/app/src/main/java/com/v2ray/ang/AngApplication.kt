@@ -47,5 +47,36 @@ class AngApplication : Application() {
 
         // Initialize theme state from MMKV
         ThemeManager.refresh()
+
+        startUiWatchdog()
+    }
+
+    /**
+     * Diagnostics for "the app froze": while the app is in the foreground process, a background thread pings the
+     * main thread; when it does not answer for 4 s, the main thread's stack (the code it is stuck in) is written to
+     * the log under the tag `EGN-ANR`, so it shows up on the logs screen.
+     */
+    private fun startUiWatchdog() {
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        val mainThread = android.os.Looper.getMainLooper().thread
+        Thread({
+            var reported = false
+            while (true) {
+                val answered = java.util.concurrent.atomic.AtomicBoolean(false)
+                main.post { answered.set(true) }
+                try {
+                    Thread.sleep(4000)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+                if (answered.get()) {
+                    reported = false
+                } else if (!reported) {
+                    reported = true
+                    val stack = mainThread.stackTrace.joinToString("\n") { "    at $it" }
+                    android.util.Log.e("EGN-ANR", "UI thread blocked for 4s+:\n$stack")
+                }
+            }
+        }, "egn-ui-watchdog").apply { isDaemon = true }.start()
     }
 }
