@@ -1,0 +1,8 @@
+{
+  "id": "yas",
+  "name": "Yas VPN",
+  "applicationId": "ir.ertebatgoostar.yasvpn",
+  "apkPrefix": "YASVPN",
+  "bot": "Yasvpnbot_bot",
+  "channel": "https://t.me/yasvpnnew"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "eli",
+  "name": "Eli VPN",
+  "applicationId": "ir.ertebatgoostar.elivpn",
+  "apkPrefix": "ELIVPN",
+  "bot": "elivpnbot_bot",
+  "channel": "https://t.me/eladmingozaresh"
+}

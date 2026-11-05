@@ -16,7 +16,7 @@ To add a brand create `brands/<id>/` with:
   * `channel`: channel link
   * `replaceIcon`: `true` (default) to build the launcher icon and the faint background logo from the logo file
   * `iconBackground`: optional launcher background colour, default `#000000`
-* `logo.png` (or `logo.jpg`): square logo, at least 512x512.
+* `logo.png` (or `logo.jpg`): square logo, at least 512x512, used for the faint background picture. Optional `icon.png`: launcher icon (defaults to the logo).
 
 Build: Actions -> "Build APK" -> `release_tag` and `brands` (`egn` = test on the EGN brand only, `all` = every
 folder, or a list such as `egn,brand2`). Each brand's APKs (arm64-v8a, armeabi-v7a, universal) are added to the

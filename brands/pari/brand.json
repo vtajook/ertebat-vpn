@@ -1,0 +1,8 @@
+{
+  "id": "pari",
+  "name": "Pari VPN",
+  "applicationId": "ir.ertebatgoostar.parivpn",
+  "apkPrefix": "PARIVPN",
+  "bot": "parivpnbot_bot",
+  "channel": "https://t.me/parivpnbot_bott"
+}

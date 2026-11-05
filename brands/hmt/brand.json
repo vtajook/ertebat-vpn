@@ -1,0 +1,8 @@
+{
+  "id": "hmt",
+  "name": "HMT VPN",
+  "applicationId": "ir.ertebatgoostar.hmtvpn",
+  "apkPrefix": "HMTVPN",
+  "bot": "hmtvpnbot_bot",
+  "channel": "https://t.me/hmtvpnbotbott"
+}

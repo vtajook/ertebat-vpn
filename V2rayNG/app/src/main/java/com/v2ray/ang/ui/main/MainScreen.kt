@@ -164,7 +164,7 @@ fun MainScreen(
                 .paint(
                     painter = painterResource(R.drawable.egn_watermark),
                     contentScale = ContentScale.Fit,
-                    alpha = 0.12f
+                    alpha = 0.18f
                 ),
             containerColor = Color.Transparent,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,

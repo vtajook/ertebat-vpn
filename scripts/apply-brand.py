@@ -36,14 +36,19 @@ def main(brand_id):
         open(path, "w", encoding="utf-8").write(text)
 
     if cfg.get("replaceIcon", True):
-        logo_path = next((p for p in glob.glob(os.path.join(folder, "logo.*"))), None)
-        if not logo_path:
+        def load(kind):
+            path = next(iter(glob.glob(os.path.join(folder, kind + ".*"))), None)
+            if not path:
+                return None
+            im = Image.open(path).convert("RGB")
+            side = min(im.size)
+            return im.crop(((im.width - side) // 2, (im.height - side) // 2,
+                            (im.width + side) // 2, (im.height + side) // 2))
+
+        logo = load("logo")
+        if logo is None:
             sys.exit(f"brands/{brand_id}/logo.png is missing")
-        logo = Image.open(logo_path).convert("RGB")
-        side = min(logo.size)
-        logo = logo.crop(((logo.width - side) // 2, (logo.height - side) // 2,
-                          (logo.width + side) // 2, (logo.height + side) // 2))
-        write_icons(logo, cfg.get("iconBackground", "#000000"))
+        write_icons(load("icon") or logo, cfg.get("iconBackground", "#000000"))
         write_watermark(logo)
 
     print(f"-PbrandAppId={cfg['applicationId']} -PbrandPrefix={cfg['apkPrefix']} "

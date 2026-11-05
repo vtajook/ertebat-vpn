@@ -1,0 +1,8 @@
+{
+  "id": "markan",
+  "name": "Markan VPN",
+  "applicationId": "ir.ertebatgoostar.markanvpn",
+  "apkPrefix": "MARKANVPN",
+  "bot": "Markanvpn_bot",
+  "channel": "https://t.me/markanvpnn"
+}

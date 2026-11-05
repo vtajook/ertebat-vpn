@@ -1,0 +1,8 @@
+{
+  "id": "saleh",
+  "name": "Saleh VPN",
+  "applicationId": "ir.ertebatgoostar.salehvpn",
+  "apkPrefix": "SALEHVPN",
+  "bot": "salehhvpn_bot",
+  "channel": "https://t.me/salehhvpn"
+}
