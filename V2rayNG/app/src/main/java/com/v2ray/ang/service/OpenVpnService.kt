@@ -144,6 +144,7 @@ class OpenVpnService : VpnService() {
             }
             if (stopping.get()) break
         }
+        worker = null
         if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
     }
 
@@ -303,6 +304,21 @@ class OpenVpnService : VpnService() {
         }, "ovpn-stats").also { it.isDaemon = true; it.start() }
     }
 
+    /**
+     * Ends the native session. When it does not finish in a few seconds the VPN process is killed: that closes
+     * the tunnel and removes the VPN icon, which is what a manual "force stop" did.
+     */
+    private fun terminateSession(e: OpenVpnEngine?, session: Thread?) {
+        Thread({
+            runCatching { e?.stop() }
+            runCatching { session?.join(4000) }
+            if (session?.isAlive == true) {
+                LogUtil.e(AppConfig.TAG, "OpenVPN: session did not stop, restarting the VPN process")
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
+        }, "ovpn-stop").start()
+    }
+
     /** Stops the tunnel and the service. Safe to call more than once and from any thread. */
     private fun stopVpn() {
         if (!stopping.compareAndSet(false, true)) return
@@ -312,7 +328,7 @@ class OpenVpnService : VpnService() {
         statsThread?.interrupt()
         statsThread = null
         // stop() ends the blocking connect() of the session thread; it can take a moment, so not here
-        Thread({ runCatching { e?.stop() } }, "ovpn-stop").start()
+        terminateSession(e, worker)
         MessageHelper.sendMsg2UI(this, AppConfig.MSG_STATE_STOP_SUCCESS, "")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -327,9 +343,12 @@ class OpenVpnService : VpnService() {
             runCatching { unregisterReceiver(receiver) }
             receiverRegistered = false
         }
+        val leftover = engine
+        engine = null
         stopping.set(true)
         connected = false
         statsThread?.interrupt()
+        if (leftover != null || worker != null) terminateSession(leftover, worker)
         super.onDestroy()
     }
 

@@ -155,6 +155,7 @@ class L2tpService : VpnService() {
             LogUtil.e(AppConfig.TAG, "L2TP/IPsec session crashed", t)
             fail(t.message ?: t.javaClass.simpleName)
         } finally {
+            worker = null
             if (!stopping.get()) android.os.Handler(mainLooper).post { stopVpn() }
         }
     }
@@ -262,6 +263,21 @@ class L2tpService : VpnService() {
         }, "l2tp-stats").also { it.isDaemon = true; it.start() }
     }
 
+    /**
+     * Ends the native session. When it does not finish in a few seconds the VPN process is killed: that closes
+     * the tunnel and removes the VPN icon, which is what a manual "force stop" did.
+     */
+    private fun terminateSession(e: L2tpEngine?, session: Thread?) {
+        Thread({
+            runCatching { e?.stop() }
+            runCatching { session?.join(4000) }
+            if (session?.isAlive == true) {
+                LogUtil.e(AppConfig.TAG, "L2TP: session did not stop, restarting the VPN process")
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
+        }, "l2tp-stop").start()
+    }
+
     /** Stops the tunnel and the service. Safe to call more than once and from any thread. */
     private fun stopVpn() {
         if (!stopping.compareAndSet(false, true)) return
@@ -271,7 +287,7 @@ class L2tpService : VpnService() {
         statsThread?.interrupt()
         statsThread = null
         // stop() ends the blocking connect() of the session thread; it can take a moment, so not here
-        Thread({ runCatching { e?.stop() } }, "l2tp-stop").start()
+        terminateSession(e, worker)
         MessageHelper.sendMsg2UI(this, AppConfig.MSG_STATE_STOP_SUCCESS, "")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -286,9 +302,12 @@ class L2tpService : VpnService() {
             runCatching { unregisterReceiver(receiver) }
             receiverRegistered = false
         }
+        val leftover = engine
+        engine = null
         stopping.set(true)
         connected = false
         statsThread?.interrupt()
+        if (leftover != null || worker != null) terminateSession(leftover, worker)
         super.onDestroy()
     }
 
