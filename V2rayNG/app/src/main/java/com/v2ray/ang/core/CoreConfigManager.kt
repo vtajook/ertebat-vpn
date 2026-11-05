@@ -1221,7 +1221,10 @@ object CoreConfigManager {
 
         v2rayConfig.routing.domainStrategy =
             MmkvManager.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
-                ?: "AsIs"
+                // Apps connect by IP but the sniffer turns the target into a domain; with "AsIs" the IP rules
+                // (geoip:ir -> direct) are then skipped and Iranian sites go through the VPN. IPIfNonMatch
+                // resolves such a domain and applies the IP rules as well.
+                ?: "IPIfNonMatch"
 
         val rulesetItems = MmkvManager.decodeRoutingRulesets()
         rulesetItems?.forEach { key ->

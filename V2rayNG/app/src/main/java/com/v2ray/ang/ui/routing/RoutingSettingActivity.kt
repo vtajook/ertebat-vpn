@@ -122,7 +122,7 @@ class RoutingSettingActivity : HelperBaseComponentActivity() {
 
     private fun getDomainStrategy(): String {
         val strategies = resources.getStringArray(R.array.routing_domain_strategy)
-        return MmkvManager.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY) ?: strategies.first()
+        return MmkvManager.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY) ?: "IPIfNonMatch"
     }
 
     private fun importPredefined(type: RoutingType) {
