@@ -31,6 +31,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.verticalScrollbar
@@ -79,7 +81,7 @@ fun MainTopBar(
             if (!showSearch) {
                 val context = LocalContext.current
                 Text(
-                    text = "@egnvpnbot",
+                    text = "@${BuildConfig.BOT_USERNAME}",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
@@ -88,7 +90,7 @@ fun MainTopBar(
                         .clickable {
                             runCatching {
                                 context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/egnvpnbot"))
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.TG_BOT_URL))
                                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 )
                             }

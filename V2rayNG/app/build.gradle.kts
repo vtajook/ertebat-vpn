@@ -10,7 +10,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "ir.ertebatgoostar.vpn"
+        // brand (white-label) values come from scripts/apply-brand.py through -P arguments; defaults = EGN
+        val brandAppId = (properties["brandAppId"] as? String) ?: "ir.ertebatgoostar.vpn"
+        val brandPrefix = (properties["brandPrefix"] as? String) ?: "EGNVPN"
+        val brandBot = (properties["brandBot"] as? String) ?: "egnvpnbot"
+        val brandChannel = (properties["brandChannel"] as? String) ?: "https://t.me/ErtebatGvpn"
+        applicationId = brandAppId
         minSdk = 24
         targetSdk = 37
         // CI run number keeps the version code growing so every build installs as an update
@@ -18,7 +23,9 @@ android {
         versionName = "2.3.15"
         // release tag of the CI build (e.g. v0.8.2-test) and the APK file name prefix: used by the in-app updater
         buildConfigField("String", "RELEASE_TAG", "\"${System.getenv("RELEASE_TAG") ?: "dev"}\"")
-        buildConfigField("String", "APK_PREFIX", "\"EGNVPN\"")
+        buildConfigField("String", "APK_PREFIX", "\"$brandPrefix\"")
+        buildConfigField("String", "BOT_USERNAME", "\"$brandBot\"")
+        buildConfigField("String", "CHANNEL_URL", "\"$brandChannel\"")
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
@@ -124,7 +131,7 @@ android {
                 .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
                 .forEach { output ->
                     val abi = output.getFilter("ABI") ?: "universal"
-                    output.outputFileName = "EGNVPN_${variant.versionName}-fdroid_${abi}.apk"
+                    output.outputFileName = "${(properties["brandPrefix"] as? String) ?: "EGNVPN"}_${variant.versionName}-fdroid_${abi}.apk"
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
@@ -144,7 +151,7 @@ android {
                     else
                         "universal"
 
-                    output.outputFileName = "EGNVPN_${variant.versionName}_${abi}.apk"
+                    output.outputFileName = "${(properties["brandPrefix"] as? String) ?: "EGNVPN"}_${variant.versionName}_${abi}.apk"
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (1000000 * versionCodes[abi]!!).plus(variant.versionCode)

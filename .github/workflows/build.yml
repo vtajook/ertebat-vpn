@@ -7,6 +7,15 @@ on:
         description: "Optional tag (e.g. v1.0.0). When set, a GitHub release with the APKs is published."
         required: false
         type: string
+      brands:
+        description: "Brands to build: egn (default, test on EGN only), all, or a list like egn,brand2 (folders of brands/)."
+        required: false
+        default: "egn"
+        type: string
+      release_notes:
+        description: "Text shown to users in the in-app update dialog (optional)."
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -164,47 +173,66 @@ jobs:
         fileName: "android_keystore.jks"
         encodedString: ${{ secrets.APP_KEYSTORE_BASE64 }}
 
-    - name: Build signed release APKs
-      if: steps.signing.outputs.has_keystore == 'true'
+    - name: Build brands
+      env:
+        BRANDS_INPUT: ${{ inputs.brands }}
+        KS_FILE: ${{ steps.android_keystore.outputs.filePath }}
+        KS_PASS: ${{ secrets.APP_KEYSTORE_PASSWORD }}
+        KS_ALIAS: ${{ secrets.APP_KEYSTORE_ALIAS }}
+        KS_KEYPASS: ${{ secrets.APP_KEY_PASSWORD }}
+        HAS_KEYSTORE: ${{ steps.signing.outputs.has_keystore }}
       run: |
-        cd ${{ github.workspace }}/V2rayNG
-        echo "sdk.dir=${ANDROID_HOME}" > local.properties
-        chmod 755 gradlew
-        ./gradlew assemblePlaystoreRelease \
-          -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
-          -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-
-    - name: Build test-signed release APKs (no keystore secrets set)
-      if: steps.signing.outputs.has_keystore != 'true'
-      run: |
-        cd ${{ github.workspace }}/V2rayNG
-        echo "sdk.dir=${ANDROID_HOME}" > local.properties
-        chmod 755 gradlew
-        ./gradlew assemblePlaystoreRelease
+        set -e
+        cd ${{ github.workspace }}
+        python3 -m pip install --quiet --break-system-packages pillow numpy
+        list="${BRANDS_INPUT:-egn}"
+        if [ "$list" = "all" ]; then list=$(for d in brands/*/; do basename "$d"; done | tr '\n' ' '); fi
+        list="${list//,/ }"
+        echo "Brands: $list"
+        mkdir -p dist
+        echo "sdk.dir=${ANDROID_HOME}" > V2rayNG/local.properties
+        chmod 755 V2rayNG/gradlew
+        SIGN=""
+        if [ "$HAS_KEYSTORE" = "true" ]; then
+          SIGN="-Pandroid.injected.signing.store.file=$KS_FILE -Pandroid.injected.signing.store.password=$KS_PASS -Pandroid.injected.signing.key.alias=$KS_ALIAS -Pandroid.injected.signing.key.password=$KS_KEYPASS"
+        fi
+        for id in $list; do
+          echo "::group::Brand $id"
+          git checkout -- V2rayNG/app/src/main/res
+          ARGS=$(python3 scripts/apply-brand.py "$id")
+          rm -rf V2rayNG/app/build/outputs/apk
+          (cd V2rayNG && ./gradlew assemblePlaystoreRelease $ARGS $SIGN)
+          n=0
+          for f in V2rayNG/app/build/outputs/apk/playstore/release/*_arm64-v8a.apk \
+                   V2rayNG/app/build/outputs/apk/playstore/release/*_armeabi-v7a.apk \
+                   V2rayNG/app/build/outputs/apk/playstore/release/*_universal.apk; do
+            cp "$f" dist/ && n=$((n+1))
+          done
+          [ "$n" = "3" ] || { echo "Brand $id produced $n of 3 APKs"; exit 1; }
+          echo "::endgroup::"
+        done
+        git checkout -- V2rayNG/app/src/main/res
+        ls -l dist
 
     - name: Upload APKs
       uses: actions/upload-artifact@v7
       with:
         name: apks
-        path: |
-          ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*.apk
-          ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/debug/*.apk
+        path: ${{ github.workspace }}/dist/*.apk
         if-no-files-found: error
 
     - name: Publish GitHub release
       if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
       env:
         GH_TOKEN: ${{ github.token }}
+        TAG: ${{ inputs.release_tag }}
+        NOTES: ${{ inputs.release_notes }}
       run: |
-        APK_DIR=${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore
-        if [ "${{ steps.signing.outputs.has_keystore }}" = "true" ]; then
-          gh release create "${{ inputs.release_tag }}" $APK_DIR/release/*.apk \
-            --title "${{ inputs.release_tag }}" --generate-notes
+        cd ${{ github.workspace }}
+        [ -n "$NOTES" ] || NOTES="نسخه‌ی جدید برنامه آماده است. برای نصب روی «به‌روزرسانی» بزنید."
+        # An existing release of this tag (e.g. made for the EGN test) gets the other brands' files added.
+        if gh release view "$TAG" >/dev/null 2>&1; then
+          gh release upload "$TAG" dist/*.apk --clobber
         else
-          # no keystore secrets: debug-signed build, published as a pre-release for testing only
-          gh release create "${{ inputs.release_tag }}" $APK_DIR/release/*.apk \
-            --title "${{ inputs.release_tag }} (test build)" --prerelease \
-            --notes "Test-signed build (public test key). Add the keystore secrets for release-signed builds."
+          gh release create "$TAG" dist/*.apk --title "$TAG (test build)" --prerelease --notes "$NOTES"
         fi

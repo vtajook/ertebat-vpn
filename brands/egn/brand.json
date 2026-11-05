@@ -1,0 +1,9 @@
+{
+  "id": "egn",
+  "name": "EGN VPN",
+  "applicationId": "ir.ertebatgoostar.vpn",
+  "apkPrefix": "EGNVPN",
+  "bot": "egnvpnbot",
+  "channel": "https://t.me/ErtebatGvpn",
+  "replaceIcon": false
+}

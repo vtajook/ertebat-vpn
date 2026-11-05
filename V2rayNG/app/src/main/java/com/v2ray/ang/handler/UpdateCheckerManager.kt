@@ -35,8 +35,10 @@ object UpdateCheckerManager {
             ) ?: throw IllegalStateException("Failed to get response")
         }
 
+        // Newest release that has files of THIS brand: a test release made for one brand only is ignored by the others.
+        val prefix = BuildConfig.APK_PREFIX + "_"
         val latestRelease = JsonUtil.fromJsonSafe(response, Array<GitHubRelease>::class.java)
-            ?.firstOrNull()
+            ?.firstOrNull { r -> r.assets.any { it.name.startsWith(prefix) && it.name.endsWith(".apk") } }
             ?: return@withContext CheckUpdateResult(hasUpdate = false)
 
         val latestVersion = latestRelease.tagName.removePrefix("v")

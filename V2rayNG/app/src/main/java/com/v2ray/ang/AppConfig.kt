@@ -131,9 +131,9 @@ object AppConfig {
     const val APP_API_URL = "https://api.github.com/repos/vtajook/ertebat-vpn/releases"
     const val APP_ISSUES_URL = "$APP_URL/issues"
     const val APP_WIKI_MODE = "$APP_URL/wiki/Mode"
-    const val APP_PRIVACY_POLICY = "https://t.me/ErtebatGvpn"
-    const val TG_CHANNEL_URL = "https://t.me/ErtebatGvpn"
-    const val TG_BOT_URL = "https://t.me/egnvpnbot"
+    val APP_PRIVACY_POLICY: String = BuildConfig.CHANNEL_URL
+    val TG_CHANNEL_URL: String = BuildConfig.CHANNEL_URL
+    val TG_BOT_URL: String = "https://t.me/${BuildConfig.BOT_USERNAME}"
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
 
