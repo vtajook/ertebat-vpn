@@ -97,7 +97,7 @@ class CiscoEngine internal constructor(
             setupDTLS(60)
             setDPD(30)
             listener.onConnected()
-            mainloop(300, RECONNECT_INTERVAL_MIN)
+            mainloop(90, RECONNECT_INTERVAL_MIN)
             return if (isCanceled) null else lastError ?: "The connection was closed by the server"
         } finally {
             done = true
