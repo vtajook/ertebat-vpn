@@ -28,6 +28,7 @@ import com.v2ray.ang.handler.SubscriptionInfoParser
 import com.v2ray.ang.ui.AboutActivity
 import com.v2ray.ang.ui.backup.BackupActivity
 import com.v2ray.ang.ui.base.HelperBaseComponentActivity
+import com.v2ray.ang.ui.checkupdate.AutoUpdatePrompt
 import com.v2ray.ang.ui.checkupdate.CheckUpdateActivity
 import com.v2ray.ang.ui.logcat.LogcatActivity
 import com.v2ray.ang.ui.perappproxy.PerAppProxyActivity
@@ -105,6 +106,7 @@ class MainActivity : HelperBaseComponentActivity() {
     @Composable
     override fun ScreenContent() {
         BackHandler { moveTaskToBack(false) }
+        AutoUpdatePrompt()
         MainScreen(
             mainViewModel = mainViewModel,
             onAction = { action ->

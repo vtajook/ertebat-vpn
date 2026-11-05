@@ -33,7 +33,7 @@ class CheckUpdateViewModel(application: Application) : BaseViewModel(application
     fun checkForUpdates() {
         launchLoading {
             try {
-                val result = UpdateCheckerManager.checkForUpdate(_checkPreRelease.value)
+                val result = UpdateCheckerManager.checkForUpdate()
                 if (result.hasUpdate) {
                     _updateResult.value = result
                     _showUpdateDialog.value = true

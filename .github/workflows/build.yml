@@ -18,6 +18,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
 
     steps:
     - name: Checkout code

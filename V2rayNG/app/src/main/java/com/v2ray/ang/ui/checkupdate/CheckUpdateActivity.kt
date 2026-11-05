@@ -63,7 +63,7 @@ fun CheckUpdateScreen(
     val updateResult by viewModel.updateResult.collectAsStateWithLifecycle()
 
     val libVersion = CoreNativeManager.getLibVersion()
-    val versionText = "v${BuildConfig.VERSION_NAME} ($libVersion)"
+    val versionText = "${BuildConfig.RELEASE_TAG.removePrefix("v").let { if (it == "dev") BuildConfig.VERSION_NAME else it }} ($libVersion)"
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -98,34 +98,6 @@ fun CheckUpdateScreen(
     }
 
     if (showUpdateDialog && updateResult != null) {
-        val result = updateResult!!
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissUpdateDialog() },
-            title = { Text(stringResource(R.string.update_new_version_found, result.latestVersion ?: "")) },
-            text = {
-                val scrollState = rememberScrollState()
-                Text(
-                    text = result.releaseNotes.orEmpty(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(scrollState)
-                        .verticalScrollbar(scrollState)
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.dismissUpdateDialog()
-                    result.downloadUrl?.let { Utils.openUri(context, it) }
-                }) {
-                    Text(stringResource(R.string.update_now))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissUpdateDialog() }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        UpdateDialog(result = updateResult!!, onDismiss = { viewModel.dismissUpdateDialog() })
     }
 }

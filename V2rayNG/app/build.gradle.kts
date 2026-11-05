@@ -16,6 +16,9 @@ android {
         // CI run number keeps the version code growing so every build installs as an update
         versionCode = 755 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
         versionName = "2.3.15"
+        // release tag of the CI build (e.g. v0.8.2-test) and the APK file name prefix: used by the in-app updater
+        buildConfigField("String", "RELEASE_TAG", "\"${System.getenv("RELEASE_TAG") ?: "dev"}\"")
+        buildConfigField("String", "APK_PREFIX", "\"EGNVPN\"")
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
