@@ -232,7 +232,15 @@ jobs:
         [ -n "$NOTES" ] || NOTES="نسخه‌ی جدید برنامه آماده است. برای نصب روی «به‌روزرسانی» بزنید."
         # An existing release of this tag (e.g. made for the EGN test) gets the other brands' files added.
         if gh release view "$TAG" >/dev/null 2>&1; then
-          gh release upload "$TAG" dist/*.apk --clobber
+          :
         else
-          gh release create "$TAG" dist/*.apk --title "$TAG (test build)" --prerelease --notes "$NOTES"
+          gh release create "$TAG" --title "$TAG (test build)" --prerelease --notes "$NOTES"
         fi
+        # one file at a time with retries: GitHub's upload endpoint sometimes answers HTTP 500
+        for f in dist/*.apk; do
+          for try in 1 2 3 4 5; do
+            gh release upload "$TAG" "$f" --clobber && break
+            echo "upload of $f failed (try $try), retrying"; sleep 10
+            [ "$try" = "5" ] && exit 1
+          done
+        done
