@@ -80,6 +80,9 @@ data class ProfileItem(
 
     /** OpenVPN transport: null/"auto" = as in the file, "udp", "tcp", or "both" (UDP first, then TCP). */
     var ovpnProto: String? = null,
+
+    /** SSH: port of the badvpn-udpgw service on the SSH server (UDP over the tunnel, e.g. WhatsApp calls). null = 7300, 0 = off. */
+    var udpgwPort: Int? = null,
 ) {
 
     companion object {

@@ -568,6 +568,10 @@
 
     <string name="server_lab_ssh_username">نام کاربری SSH</string>
     <string name="server_lab_ssh_password">رمز عبور SSH</string>
+    <string name="server_lab_ssh_tls">SSH روی TLS</string>
+    <string name="server_lab_ssh_sni">SNI (نام سرور)</string>
+    <string name="server_lab_ssh_allow_insecure">پذیرش گواهی نامعتبر</string>
+    <string name="server_lab_ssh_udpgw">پورت UDPGW (تماس تصویری واتساپ؛ خالی = 7300، 0 = خاموش)</string>
     <string name="toast_ssh_credentials_required">نام کاربری و رمز عبور SSH را وارد کنید</string>
     <string name="stats_download">دانلود</string>
     <string name="stats_upload">آپلود</string>

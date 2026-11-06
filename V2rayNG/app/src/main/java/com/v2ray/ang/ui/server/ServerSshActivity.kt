@@ -10,6 +10,7 @@ import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.fmt.SshFmt
 import com.v2ray.ang.ui.compose.FormTextField
+import com.v2ray.ang.ui.compose.SettingsSwitchItem
 
 /** Editor for `ssh://user:pass@host:port#name` profiles (tunnelled through a local SOCKS5 proxy). */
 class ServerSshActivity : BaseServerActivity() {
@@ -52,6 +53,31 @@ class ServerSshActivity : BaseServerActivity() {
             state.password,
             { state.password = it },
             isError = state.isPasswordError
+        )
+        SettingsSwitchItem(
+            title = stringResource(R.string.server_lab_ssh_tls),
+            checked = state.streamSecurity == "tls",
+            onCheckedChange = {
+                state.streamSecurity = if (it) "tls" else ""
+                if (it && state.sni.isBlank()) state.allowInsecure = true
+            }
+        )
+        if (state.streamSecurity == "tls") {
+            FormTextField(
+                stringResource(R.string.server_lab_ssh_sni),
+                state.sni,
+                { state.sni = it }
+            )
+            SettingsSwitchItem(
+                title = stringResource(R.string.server_lab_ssh_allow_insecure),
+                checked = state.allowInsecure,
+                onCheckedChange = { state.allowInsecure = it }
+            )
+        }
+        FormTextField(
+            stringResource(R.string.server_lab_ssh_udpgw),
+            state.udpgwPort,
+            { state.udpgwPort = it.filter { c -> c.isDigit() }.take(5) }
         )
     }
 

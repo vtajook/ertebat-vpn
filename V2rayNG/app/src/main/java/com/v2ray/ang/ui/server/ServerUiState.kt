@@ -54,6 +54,7 @@ class ServerUiState(
     streamSecurity: String = "",
     sni: String = "",
     allowInsecure: Boolean = false,
+    udpgwPort: String = "",
     fingerPrint: String = "",
     alpn: String = "",
     publicKeyReality: String = "",
@@ -103,6 +104,7 @@ class ServerUiState(
     var streamSecurity by mutableStateOf(streamSecurity)
     var sni by mutableStateOf(sni)
     var allowInsecure by mutableStateOf(allowInsecure)
+    var udpgwPort by mutableStateOf(udpgwPort)
     var fingerPrint by mutableStateOf(fingerPrint)
     var alpn by mutableStateOf(alpn)
     var publicKeyReality by mutableStateOf(publicKeyReality)
@@ -178,6 +180,7 @@ class ServerUiState(
             security = streamSecurity,
             sni = sni,
             insecure = allowInsecure,
+            udpgwPort = if (isSsh) udpgwPort.trim().toIntOrNull() else initialConfig.udpgwPort,
             fingerPrint = fingerPrint,
             alpn = alpn,
             shortId = shortId,
@@ -232,6 +235,7 @@ class ServerUiState(
                 streamSecurity = initialConfig.security ?: "",
                 sni = initialConfig.sni ?: "",
                 allowInsecure = initialConfig.insecure == true,
+                udpgwPort = initialConfig.udpgwPort?.toString() ?: "",
                 fingerPrint = initialConfig.fingerPrint ?: "",
                 alpn = initialConfig.alpn ?: "",
                 publicKeyReality = initialConfig.publicKey ?: "",

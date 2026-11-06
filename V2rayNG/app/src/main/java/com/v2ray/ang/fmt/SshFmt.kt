@@ -34,9 +34,17 @@ object SshFmt : FmtBase() {
             body = body.substring(0, hashIdx)
         }
 
-        // drop an optional query/path, e.g. ssh://u:p@h:22/?x=y
+        // optional query/path, e.g. ssh://u:p@h:22/?security=tls&sni=x&udpgw=7300
+        var query = ""
         val cut = body.indexOfAny(charArrayOf('?', '/'), startIndex = body.lastIndexOf('@').coerceAtLeast(0))
-        if (cut >= 0) body = body.substring(0, cut)
+        if (cut >= 0) {
+            val q = body.indexOf('?', cut)
+            if (q >= 0) query = body.substring(q + 1)
+            body = body.substring(0, cut)
+        }
+        val params = query.split('&').filter { it.contains('=') }.associate {
+            Utils.decodeURIComponent(it.substringBefore('=')).lowercase() to Utils.decodeURIComponent(it.substringAfter('='))
+        }
 
         val at = body.lastIndexOf('@')
         if (at <= 0) return null
@@ -75,6 +83,15 @@ object SshFmt : FmtBase() {
         config.serverPort = port.toString()
         config.username = user
         config.password = pass
+
+        val security = (params["security"] ?: params["tls"] ?: "").lowercase()
+        if (security == "tls" || security == "1" || security == "true" || params.containsKey("sni")) {
+            config.security = "tls"
+            config.sni = (params["sni"] ?: params["peer"] ?: params["host"]).orEmpty()
+            val insecure = params["allowinsecure"] ?: params["insecure"]
+            config.insecure = insecure == null || insecure == "1" || insecure.equals("true", true)
+        }
+        (params["udpgw"] ?: params["udpgwport"])?.toIntOrNull()?.let { config.udpgwPort = it }
         return config
     }
 
@@ -86,6 +103,14 @@ object SshFmt : FmtBase() {
         val user = Utils.encodeURIComponent(config.username.orEmpty())
         val pass = Utils.encodeURIComponent(config.password.orEmpty())
         val host = Utils.getIpv6Address(config.server.orEmpty())
-        return "$user:$pass@$host:${config.serverPort}#${Utils.encodeURIComponent(config.remarks)}"
+        val q = mutableListOf<String>()
+        if (config.security.equals("tls", true)) {
+            q += "security=tls"
+            if (!config.sni.isNullOrBlank()) q += "sni=" + Utils.encodeURIComponent(config.sni.orEmpty())
+            q += "allowInsecure=" + if (config.insecure == false) "0" else "1"
+        }
+        config.udpgwPort?.let { q += "udpgw=$it" }
+        val query = if (q.isEmpty()) "" else "?" + q.joinToString("&")
+        return "$user:$pass@$host:${config.serverPort}$query#${Utils.encodeURIComponent(config.remarks)}"
     }
 }

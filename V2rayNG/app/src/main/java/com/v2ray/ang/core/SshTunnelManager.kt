@@ -9,6 +9,17 @@ import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.EOFException
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.Inet4Address
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.SocketFactory
+import javax.net.ssl.SNIHostName
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -169,6 +180,7 @@ object SshTunnelManager {
                 // Servers sold to end users rotate/reinstall often; a pinned host key would only
                 // produce confusing failures, so the key is accepted as presented.
                 c.addHostKeyVerifier(PromiscuousVerifier())
+                if (p.security.equals("tls", true)) c.socketFactory = TlsSocketFactory(p.sni, p.server.orEmpty(), p.insecure != false)
                 c.connectTimeout = CONNECT_TIMEOUT_MS
                 c.connect(p.server.orEmpty(), p.serverPort.orEmpty().toInt())
                 c.connection.keepAlive.keepAliveInterval = KEEPALIVE_SECONDS
@@ -249,7 +261,11 @@ object SshTunnelManager {
             val portBytes = readFully(input, 2)
             val port = ((portBytes[0].toInt() and 0xFF) shl 8) or (portBytes[1].toInt() and 0xFF)
 
-            if (cmd != 1) { // only CONNECT; no BIND / UDP ASSOCIATE over SSH
+            if (cmd == 3) { // UDP ASSOCIATE: carried through the udpgw service of the SSH server
+                handleUdpAssociate(sock, input, output, executor, gen)
+                return
+            }
+            if (cmd != 1) { // BIND is not possible over SSH
                 reply(output, 7)
                 return
             }
@@ -282,6 +298,133 @@ object SshTunnelManager {
         } finally {
             closeQuietly(sock, channel)
         }
+    }
+
+    // ── UDP over SSH (badvpn-udpgw) ────────────────────────────────────────────────────────────
+
+    private const val DEFAULT_UDPGW_PORT = 7300
+    private const val UDP_IDLE_TIMEOUT_MS = 5 * 60_000
+    private const val MAX_UDP_FLOWS = 256
+
+    /**
+     * SOCKS5 UDP ASSOCIATE: opens a loopback UDP socket for the core, and relays its datagrams through one
+     * `direct-tcpip` channel to the udpgw service on the SSH server. Needs `badvpn-udpgw` listening on
+     * 127.0.0.1:<udpgw port> there; without it the request is refused and apps fall back to TCP.
+     */
+    private fun handleUdpAssociate(sock: Socket, input: InputStream, output: OutputStream, executor: ExecutorService, gen: Int) {
+        val gwPort = profile?.udpgwPort ?: DEFAULT_UDPGW_PORT
+        if (gwPort !in 1..65535) {
+            reply(output, 7)
+            return
+        }
+        var udp: DatagramSocket? = null
+        var channel: net.schmizz.sshj.connection.channel.direct.DirectConnection? = null
+        try {
+            channel = try {
+                ensureConnected(gen).newDirectConnection(AppConfig.LOOPBACK, gwPort)
+            } catch (e: Exception) {
+                LogUtil.w(AppConfig.TAG, "udpgw on port $gwPort is not reachable: ${e.message}")
+                reply(output, 5)
+                return
+            }
+            val u = DatagramSocket(0, InetAddress.getByName(AppConfig.LOOPBACK))
+            udp = u
+            u.soTimeout = UDP_IDLE_TIMEOUT_MS
+            output.write(byteArrayOf(5, 0, 0, 1, 127, 0, 0, 1, (u.localPort shr 8).toByte(), (u.localPort and 0xFF).toByte()))
+            output.flush()
+            sock.soTimeout = 0
+
+            val ch = channel
+            val chOut = ch.outputStream
+            val chIn = ch.inputStream
+            val flows = HashMap<String, Int>()
+            val flowAddr = HashMap<Int, ByteArray>()
+            var nextId = 0
+            val clientRef = java.util.concurrent.atomic.AtomicReference<java.net.SocketAddress?>(null)
+            val closeAll = { runCatching { u.close() }; runCatching { ch.close() }; runCatching { sock.close() }; Unit }
+
+            // core -> udpgw
+            executor.execute {
+                val buf = ByteArray(65535)
+                try {
+                    while (true) {
+                        val pkt = DatagramPacket(buf, buf.size)
+                        u.receive(pkt)
+                        clientRef.set(pkt.socketAddress)
+                        val d = UdpGwProto.parseSocksUdp(buf, pkt.length) ?: continue
+                        val addr = d.addr ?: runCatching {
+                            InetAddress.getAllByName(d.host).firstOrNull { it is Inet4Address }?.address
+                        }.getOrNull() ?: continue
+                        val key = addr.joinToString(".") { (it.toInt() and 0xFF).toString() } + ":" + d.port
+                        val id = flows.getOrPut(key) {
+                            if (flows.size >= MAX_UDP_FLOWS) { flows.clear(); flowAddr.clear() }
+                            val n = nextId++ and 0xFFFF
+                            flowAddr[n] = addr
+                            n
+                        }
+                        val frame = UdpGwProto.encode(id, addr, d.port, d.data)
+                        synchronized(chOut) { chOut.write(frame); chOut.flush() }
+                    }
+                } catch (_: Exception) {
+                } finally {
+                    closeAll()
+                }
+            }
+            // udpgw -> core
+            executor.execute {
+                try {
+                    while (true) {
+                        val f = UdpGwProto.read(chIn) ?: break
+                        if (f.isKeepAlive || f.addr.isEmpty()) continue
+                        val to = clientRef.get() ?: continue
+                        val out = UdpGwProto.buildSocksUdp(f.addr, f.port, f.data)
+                        u.send(DatagramPacket(out, out.size, to))
+                    }
+                } catch (_: Exception) {
+                } finally {
+                    closeAll()
+                }
+            }
+            // the association lives as long as this TCP control connection
+            while (input.read() >= 0) { /* ignore */ }
+        } catch (e: Exception) {
+            LogUtil.d(AppConfig.TAG, "SSH udp associate ended: ${e.message}")
+        } finally {
+            runCatching { udp?.close() }
+            runCatching { channel?.close() }
+        }
+    }
+
+    /** SSH over TLS: a TLS client socket with the configured SNI (certificates are only checked when [insecure] is off). */
+    private class TlsSocketFactory(sni: String?, host: String, insecure: Boolean) : SocketFactory() {
+        private val serverName: String? = sni?.takeIf { it.isNotBlank() }
+            ?: host.takeIf { it.isNotBlank() && !it.contains(':') && !it.all { c -> c.isDigit() || c == '.' } }
+        private val factory: SSLSocketFactory = if (insecure) {
+            val trustAll = object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+            }
+            SSLContext.getInstance("TLS").apply { init(null, arrayOf(trustAll), SecureRandom()) }.socketFactory
+        } else {
+            SSLContext.getDefault().socketFactory
+        }
+
+        private fun configure(s: Socket): Socket {
+            val ssl = s as SSLSocket
+            serverName?.let { name ->
+                ssl.sslParameters = ssl.sslParameters.apply { serverNames = listOf(SNIHostName(name)) }
+            }
+            return ssl
+        }
+
+        override fun createSocket(): Socket = configure(factory.createSocket())
+        override fun createSocket(host: String?, port: Int): Socket = configure(factory.createSocket(host, port))
+        override fun createSocket(host: String?, port: Int, localHost: InetAddress?, localPort: Int): Socket =
+            configure(factory.createSocket(host, port, localHost, localPort))
+        override fun createSocket(host: InetAddress?, port: Int): Socket = configure(factory.createSocket(host, port))
+        override fun createSocket(address: InetAddress?, port: Int, localAddress: InetAddress?, localPort: Int): Socket =
+            configure(factory.createSocket(address, port, localAddress, localPort))
     }
 
     private fun pump(from: InputStream, to: OutputStream, onEnd: () -> Unit, onEof: (() -> Unit)? = null) {
