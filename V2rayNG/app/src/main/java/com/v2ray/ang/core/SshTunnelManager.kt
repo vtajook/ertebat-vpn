@@ -180,7 +180,7 @@ object SshTunnelManager {
                 // Servers sold to end users rotate/reinstall often; a pinned host key would only
                 // produce confusing failures, so the key is accepted as presented.
                 c.addHostKeyVerifier(PromiscuousVerifier())
-                if (p.security.equals("tls", true)) c.socketFactory = TlsSocketFactory(p.sni, p.server.orEmpty(), p.insecure != false)
+                if (p.security.equals("tls", true)) c.socketFactory = TlsSocketFactory(p.sni, p.server.orEmpty(), true)
                 c.connectTimeout = CONNECT_TIMEOUT_MS
                 c.connect(p.server.orEmpty(), p.serverPort.orEmpty().toInt())
                 c.connection.keepAlive.keepAliveInterval = KEEPALIVE_SECONDS

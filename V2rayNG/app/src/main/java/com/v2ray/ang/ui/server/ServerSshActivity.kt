@@ -61,7 +61,7 @@ class ServerSshActivity : BaseServerActivity() {
             checked = state.streamSecurity.equals("tls", true),
             onCheckedChange = {
                 state.streamSecurity = if (it) "tls" else ""
-                if (it && state.sni.isBlank()) state.allowInsecure = true
+                if (it) state.allowInsecure = true
             }
         )
         if (state.streamSecurity.equals("tls", true)) {
@@ -69,11 +69,6 @@ class ServerSshActivity : BaseServerActivity() {
                 stringResource(R.string.server_lab_ssh_sni),
                 state.sni,
                 { state.sni = it }
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.server_lab_ssh_allow_insecure),
-                checked = state.allowInsecure,
-                onCheckedChange = { state.allowInsecure = it }
             )
         }
         FormTextField(
