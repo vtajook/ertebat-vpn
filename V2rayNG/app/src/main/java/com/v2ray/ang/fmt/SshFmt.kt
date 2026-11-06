@@ -89,8 +89,7 @@ object SshFmt : FmtBase() {
         if (security == "tls" || security == "1" || security == "true" || params.containsKey("sni")) {
             config.security = "tls"
             config.sni = (params["sni"] ?: params["servername"] ?: params["serversni"] ?: params["peer"] ?: params["host"]).orEmpty()
-            val insecure = params["allowinsecure"] ?: params["insecure"]
-            config.insecure = insecure == null || insecure == "1" || insecure.equals("true", true)
+            config.insecure = false // the SSH TLS socket accepts any certificate itself
         }
         config.udpgwPort = (params["udpgw"] ?: params["udpgwport"] ?: params["udpgw_port"])?.toIntOrNull() ?: DEFAULT_UDPGW_PORT
         return config

@@ -61,7 +61,6 @@ class ServerSshActivity : BaseServerActivity() {
             checked = state.streamSecurity.equals("tls", true),
             onCheckedChange = {
                 state.streamSecurity = if (it) "tls" else ""
-                if (it) state.allowInsecure = true
             }
         )
         if (state.streamSecurity.equals("tls", true)) {
