@@ -24,6 +24,17 @@ mkdir -p "$WORK" "$OUT"
 if [ ! -d "$WORK/oc-src" ]; then
   cp -r "$OC" "$WORK/oc-src"
   rm -rf "$WORK/oc-src/.git"
+  # Basic is "disabled by default" upstream, which makes servers that answer HTTP 401 with a Basic
+  # challenge fail ("requested Basic authentication which is disabled by default"). Enable it.
+  python3 - "$WORK/oc-src/jni.c" <<'PY'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+needle = "\topenconnect_set_token_callbacks(ctx->vpninfo, ctx, lock_token_cb,"
+assert s.count(needle) == 1, "jni.c changed: update the Basic-auth patch"
+s = s.replace(needle, '\topenconnect_set_http_auth(ctx->vpninfo, "basic,digest,ntlm,negotiate");\n\n' + needle)
+open(p, "w").write(s)
+PY
   (cd "$WORK/oc-src" && sh autogen.sh)
 fi
 
