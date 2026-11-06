@@ -572,7 +572,7 @@
     <string name="server_lab_ssh_tls">SSH over TLS</string>
     <string name="server_lab_ssh_sni">SNI (server name)</string>
     <string name="server_lab_ssh_allow_insecure">Allow insecure certificate</string>
-    <string name="server_lab_ssh_udpgw">UDPGW port (UDP / WhatsApp calls, empty = 7300, 0 = off)</string>
+    <string name="server_lab_ssh_udpgw">UDPGW port (UDP / WhatsApp calls)</string>
     <string name="toast_ssh_credentials_required">Enter the SSH username and password</string>
     <string name="stats_download">Download</string>
     <string name="stats_upload">Upload</string>

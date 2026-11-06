@@ -99,11 +99,6 @@ object LauncherManager {
 
         SettingsManager.refreshRuntimeSocksPort()
 
-        if (config.insecure == true && config.pinnedCA256.isNullOrEmpty()) {
-            context.toastError(R.string.toast_allow_insecure_deprecated)
-            Utils.setClipboard(context, context.getString(R.string.toast_allow_insecure_deprecated))
-        }
-
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_PROXY_SHARING)) {
             context.toast(R.string.toast_warning_pref_proxysharing_short)
         } else {

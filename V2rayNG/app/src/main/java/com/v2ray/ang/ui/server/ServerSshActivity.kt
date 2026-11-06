@@ -27,6 +27,8 @@ class ServerSshActivity : BaseServerActivity() {
             ).also {
                 // a brand new SSH profile starts on the standard SSH port
                 if (initialConfig.serverPort.isNullOrBlank()) it.port = SshFmt.DEFAULT_SSH_PORT.toString()
+                // UDP (WhatsApp calls) is always on; 7300 unless the config says otherwise
+                if (it.udpgwPort.isBlank()) it.udpgwPort = "7300"
             }
         }.apply {
             configType = serverConfigType
@@ -56,13 +58,13 @@ class ServerSshActivity : BaseServerActivity() {
         )
         SettingsSwitchItem(
             title = stringResource(R.string.server_lab_ssh_tls),
-            checked = state.streamSecurity == "tls",
+            checked = state.streamSecurity.equals("tls", true),
             onCheckedChange = {
                 state.streamSecurity = if (it) "tls" else ""
                 if (it && state.sni.isBlank()) state.allowInsecure = true
             }
         )
-        if (state.streamSecurity == "tls") {
+        if (state.streamSecurity.equals("tls", true)) {
             FormTextField(
                 stringResource(R.string.server_lab_ssh_sni),
                 state.sni,

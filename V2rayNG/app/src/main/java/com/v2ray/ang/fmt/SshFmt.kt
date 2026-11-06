@@ -15,6 +15,7 @@ import com.v2ray.ang.util.Utils
 object SshFmt : FmtBase() {
 
     const val DEFAULT_SSH_PORT = 22
+    const val DEFAULT_UDPGW_PORT = 7300
 
     /**
      * Parses `ssh://user:pass@host:port#name`.
@@ -87,11 +88,11 @@ object SshFmt : FmtBase() {
         val security = (params["security"] ?: params["tls"] ?: "").lowercase()
         if (security == "tls" || security == "1" || security == "true" || params.containsKey("sni")) {
             config.security = "tls"
-            config.sni = (params["sni"] ?: params["peer"] ?: params["host"]).orEmpty()
+            config.sni = (params["sni"] ?: params["servername"] ?: params["serversni"] ?: params["peer"] ?: params["host"]).orEmpty()
             val insecure = params["allowinsecure"] ?: params["insecure"]
             config.insecure = insecure == null || insecure == "1" || insecure.equals("true", true)
         }
-        (params["udpgw"] ?: params["udpgwport"])?.toIntOrNull()?.let { config.udpgwPort = it }
+        config.udpgwPort = (params["udpgw"] ?: params["udpgwport"] ?: params["udpgw_port"])?.toIntOrNull() ?: DEFAULT_UDPGW_PORT
         return config
     }
 
