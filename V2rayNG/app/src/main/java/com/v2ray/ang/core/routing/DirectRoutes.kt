@@ -231,22 +231,11 @@ object DirectRoutes {
                 if (direct.isEmpty() || prefix >= 8) builder.addRoute(toIp(r.first), prefix) else wide.add(r)
             }
             val merged = merge(wide)
-            if (merged.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Keep a real default route (so the system treats this as a full VPN and shows its icon) and cut the
-                // direct ranges out of it with excluded routes.
-                for (r in merged) for ((ip, p) in toCidrs(r)) builder.addRoute(toIp(ip), p)
-                for (c in direct) for (r in merged) {
-                    val lo = maxOf(c.first, r.first)
-                    val hi = minOf(c.last, r.last)
-                    if (lo > hi) continue
-                    for ((ip, p) in toCidrs(lo..hi)) {
-                        runCatching { builder.excludeRoute(IpPrefix(InetAddress.getByName(toIp(ip)), p)) }
-                    }
-                }
-            } else {
-                for (r in merged) {
-                    for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
-                }
+            // Direct ranges are cut out of the wide routes (plain included routes, no excludeRoute): with
+            // excluded routes some apps (e.g. Claude) saw the network as offline for a few seconds on every
+            // new connection, which the official OpenVPN app does not.
+            for (r in merged) {
+                for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
             }
             for (ip in pinned) runCatching { builder.addRoute(toIp(ip), 32) }
         }
