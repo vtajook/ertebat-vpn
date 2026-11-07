@@ -20,17 +20,10 @@
     ]
   },
   {
-    "remarks": "Bypass Iran domains",
-    "outboundTag": "direct",
-    "domain": [
-      "domain:ir"
-    ]
-  },
-  {
     "remarks": "Bypass Iran IP",
     "outboundTag": "direct",
     "ip": [
-       "geoip:ir"
+      "geoip:ir"
     ]
   }
 ]
