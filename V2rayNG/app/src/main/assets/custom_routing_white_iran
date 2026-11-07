@@ -23,8 +23,7 @@
     "remarks": "Bypass Iran domains",
     "outboundTag": "direct",
     "domain": [
-      "domain:ir",
-      "geosite:category-ir"
+      "domain:ir"
     ]
   },
   {
