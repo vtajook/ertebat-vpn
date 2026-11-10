@@ -37,8 +37,6 @@ class OpenVpnEngine(
     private var builder: VpnService.Builder? = null
     private var routes: DirectRoutes.Collector? = null
     private var dnsAdded = false
-    private var fullTunnel = false
-    private var ipv6Routed = false
     private var sessionName = AppConfigName
 
     /** Parses [ovpn] and applies the credentials. Returns an error text, or null when the config is usable. */
@@ -85,8 +83,6 @@ class OpenVpnEngine(
             DirectRoutes.Collector(b, runCatching { DirectRoutes.directRanges(svc) }.getOrDefault(emptyList()))
         } else null
         dnsAdded = false
-        fullTunnel = false
-        ipv6Routed = false
         return true
     }
 
@@ -101,12 +97,12 @@ class OpenVpnEngine(
     override fun tun_builder_set_route_metric_default(metric: Int): Boolean = true
 
     override fun tun_builder_reroute_gw(ipv4: Boolean, ipv6: Boolean, flags: Long): Boolean = guard {
-        if (ipv4) { routes?.addRoute("0.0.0.0", 0); fullTunnel = true }
-        if (ipv6) { builder?.addRoute("::", 0); ipv6Routed = true }
+        if (ipv4) routes?.addRoute("0.0.0.0", 0)
+        if (ipv6) builder?.addRoute("::", 0)
     }
 
     override fun tun_builder_add_route(address: String, prefixLength: Int, metric: Int, ipv6: Boolean): Boolean =
-        guard { if (ipv6) { builder?.addRoute(address, prefixLength); ipv6Routed = true } else routes?.addRoute(address, prefixLength) }
+        guard { if (ipv6) builder?.addRoute(address, prefixLength) else routes?.addRoute(address, prefixLength) }
 
     override fun tun_builder_exclude_route(address: String, prefixLength: Int, metric: Int, ipv6: Boolean): Boolean =
         guard {
@@ -159,10 +155,6 @@ class OpenVpnEngine(
                 b.addDnsServer("8.8.8.8")
             }
             b.setSession(sessionName)
-            // Full tunnel without IPv6 from the server: IPv6 would otherwise bypass the tunnel on the phone's own
-            // network (leak, and apps wait on a dead IPv6 path before using IPv4). Send it into the tunnel so
-            // it is dropped and apps use IPv4 at once, like the official OpenVPN app does.
-            if (fullTunnel && !ipv6Routed) runCatching { b.addRoute("::", 0) }
             routes?.apply()
             val pfd = b.establish()
             if (pfd == null) -1 else pfd.detachFd()

@@ -27,6 +27,10 @@ object DirectRoutes {
         "192.0.0.0/24", "192.168.0.0/16", "198.18.0.0/15", "224.0.0.0/3",
     )
 
+    /** Route budget, see [Collector.apply]: excluded routes cost one route each, cut-out ranges several. */
+    private const val MAX_EXCLUDED_BLOCKS = 300
+    private const val MAX_CUT_BLOCKS = 64
+
     @Volatile
     private var cache: Pair<String, List<LongRange>>? = null
 
@@ -231,33 +235,49 @@ object DirectRoutes {
                 if (direct.isEmpty() || prefix >= 8) builder.addRoute(toIp(r.first), prefix) else wide.add(r)
             }
             val merged = merge(wide)
-            // Modes (Settings > "Direct route mode"):
-            //  0: plain routes, direct ranges cut out of the wide routes (no VPN key icon on some phones)
-            //  1: real default route + every direct range as an excluded route (icon, but apps saw "offline" briefly)
-            //  2: real default route + only the non-LAN direct ranges (Iran) excluded; LAN goes through the tunnel
+            // Every route ends up in the LinkProperties that Android sends to all apps on each network change.
+            // With thousands of routes (all of geoip:ir) that parcel grows to hundreds of KB or more than the
+            // 1 MB binder limit: apps then miss network callbacks (status bar VPN icon missing, apps showing
+            // "offline" although traffic flows). So only the largest direct blocks are kept; the small ones
+            // simply stay inside the tunnel.
+            // Modes (Settings > "Direct route mode"): 1 = real default route + excluded routes (Android 13+),
+            // 0 = plain routes with the direct ranges cut out.
             val mode = runCatching {
                 MmkvManager.decodeSettingsString(AppConfig.PREF_DIRECT_ROUTE_MODE, AppConfig.DEFAULT_DIRECT_ROUTE_MODE)
             }.getOrNull() ?: AppConfig.DEFAULT_DIRECT_ROUTE_MODE
-            if (merged.isNotEmpty() && mode != "0" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val cuts = if (mode == "2") {
-                    val lan = merge(PRIVATE_V4.mapNotNull { parseCidr(it) })
-                    direct.flatMap { subtract(it, lan) }
-                } else direct
-                for (r in merged) for ((ip, p) in toCidrs(r)) builder.addRoute(toIp(ip), p)
+            val exclude = merged.isNotEmpty() && mode != "0" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            val cuts = limit(direct, if (exclude) MAX_EXCLUDED_BLOCKS else MAX_CUT_BLOCKS)
+            var count = 0
+            if (exclude) {
+                for (r in merged) for ((ip, p) in toCidrs(r)) { builder.addRoute(toIp(ip), p); count++ }
                 for (c in cuts) for (r in merged) {
                     val lo = maxOf(c.first, r.first)
                     val hi = minOf(c.last, r.last)
                     if (lo > hi) continue
                     for ((ip, p) in toCidrs(lo..hi)) {
                         runCatching { builder.excludeRoute(IpPrefix(InetAddress.getByName(toIp(ip)), p)) }
+                        count++
                     }
                 }
             } else {
                 for (r in merged) {
-                    for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
+                    for (piece in subtract(r, cuts)) for ((ip, p) in toCidrs(piece)) { builder.addRoute(toIp(ip), p); count++ }
                 }
             }
+            if (merged.isNotEmpty()) {
+                LogUtil.i(AppConfig.TAG, "Direct routes: ${if (exclude) "default+excluded" else "plain"}, $count routes, ${cuts.size} of ${direct.size} direct ranges")
+            }
+            // like the Xray service: a VPN is "metered" unless told otherwise, which makes apps hold back
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) runCatching { builder.setMetered(false) }
             for (ip in pinned) runCatching { builder.addRoute(toIp(ip), 32) }
+        }
+
+        /** The [max] largest CIDR blocks of [ranges] (all of them when they fit), merged and sorted. */
+        private fun limit(ranges: List<LongRange>, max: Int): List<LongRange> {
+            val blocks = ArrayList<Pair<Long, Int>>()
+            for (r in ranges) blocks.addAll(toCidrs(r))
+            if (blocks.size <= max) return ranges
+            return merge(blocks.sortedBy { it.second }.take(max).map { rangeOf(it.first, it.second) })
         }
 
         private fun subtract(r: LongRange, cuts: List<LongRange>): List<LongRange> {

@@ -593,8 +593,7 @@
     <string name="server_lab_l2tp_psk">کلید مشترک IPsec (Secret)</string>
     <string name="title_pref_direct_route_mode">حالت مسیر مستقیم (OpenVPN / Cisco / L2TP)</string>
     <string-array name="direct_route_mode">
-        <item>۰ - مسیر ساده (در بعضی گوشی‌ها علامت VPN نمی‌آید)</item>
-        <item>۱ - مسیر کلی + همه استثناها (علامت دارد، ممکن است تأخیر بدهد)</item>
-        <item>۲ - مسیر کلی + فقط استثنای ایران (پیشنهادی)</item>
+        <item>مسیر کلی + استثنا (پیشنهادی)</item>
+        <item>مسیر ساده</item>
     </string-array>
 </resources>
