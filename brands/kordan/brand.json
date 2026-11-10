@@ -1,0 +1,8 @@
+{
+  "id": "kordan",
+  "name": "Kordan VPN",
+  "applicationId": "ir.ertebatgoostar.kordanvpn",
+  "apkPrefix": "KORDANVPN",
+  "bot": "kordanvpn_bot",
+  "channel": "https://t.me/kordanvpn"
+}
