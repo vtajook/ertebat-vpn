@@ -231,11 +231,31 @@ object DirectRoutes {
                 if (direct.isEmpty() || prefix >= 8) builder.addRoute(toIp(r.first), prefix) else wide.add(r)
             }
             val merged = merge(wide)
-            // Direct ranges are cut out of the wide routes (plain included routes, no excludeRoute): with
-            // excluded routes some apps (e.g. Claude) saw the network as offline for a few seconds on every
-            // new connection, which the official OpenVPN app does not.
-            for (r in merged) {
-                for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
+            // Modes (Settings > "Direct route mode"):
+            //  0: plain routes, direct ranges cut out of the wide routes (no VPN key icon on some phones)
+            //  1: real default route + every direct range as an excluded route (icon, but apps saw "offline" briefly)
+            //  2: real default route + only the non-LAN direct ranges (Iran) excluded; LAN goes through the tunnel
+            val mode = runCatching {
+                MmkvManager.decodeSettingsString(AppConfig.PREF_DIRECT_ROUTE_MODE, AppConfig.DEFAULT_DIRECT_ROUTE_MODE)
+            }.getOrNull() ?: AppConfig.DEFAULT_DIRECT_ROUTE_MODE
+            if (merged.isNotEmpty() && mode != "0" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val cuts = if (mode == "2") {
+                    val lan = merge(PRIVATE_V4.mapNotNull { parseCidr(it) })
+                    direct.flatMap { subtract(it, lan) }
+                } else direct
+                for (r in merged) for ((ip, p) in toCidrs(r)) builder.addRoute(toIp(ip), p)
+                for (c in cuts) for (r in merged) {
+                    val lo = maxOf(c.first, r.first)
+                    val hi = minOf(c.last, r.last)
+                    if (lo > hi) continue
+                    for ((ip, p) in toCidrs(lo..hi)) {
+                        runCatching { builder.excludeRoute(IpPrefix(InetAddress.getByName(toIp(ip)), p)) }
+                    }
+                }
+            } else {
+                for (r in merged) {
+                    for (piece in subtract(r, direct)) for ((ip, p) in toCidrs(piece)) builder.addRoute(toIp(ip), p)
+                }
             }
             for (ip in pinned) runCatching { builder.addRoute(toIp(ip), 32) }
         }

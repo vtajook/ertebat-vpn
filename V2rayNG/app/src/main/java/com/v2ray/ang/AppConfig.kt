@@ -31,6 +31,8 @@ object AppConfig {
     const val PREF_LOCAL_DNS_PORT = "pref_local_dns_port"
     const val PREF_VPN_DNS = "pref_vpn_dns"
     const val PREF_VPN_BYPASS_LAN = "pref_vpn_bypass_lan"
+    const val PREF_DIRECT_ROUTE_MODE = "pref_direct_route_mode"
+    const val DEFAULT_DIRECT_ROUTE_MODE = "2"
     const val PREF_VPN_INTERFACE_ADDRESS_CONFIG_INDEX = "pref_vpn_interface_address_config_index"
     const val PREF_VPN_MTU = "pref_vpn_mtu"
     const val PREF_ROUTING_DOMAIN_STRATEGY = "pref_routing_domain_strategy"

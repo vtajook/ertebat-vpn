@@ -120,6 +120,7 @@ fun SettingsScreen(
     var vpnDns by rememberMmkvString(AppConfig.PREF_VPN_DNS, "")
     var vpnBypassLan by rememberMmkvString(AppConfig.PREF_VPN_BYPASS_LAN, AppConfig.DEFAULT_VPN_BYPASS_LAN)
     var vpnInterfaceAddress by rememberMmkvString(AppConfig.PREF_VPN_INTERFACE_ADDRESS_CONFIG_INDEX, "0")
+    var directRouteMode by rememberMmkvString(AppConfig.PREF_DIRECT_ROUTE_MODE, AppConfig.DEFAULT_DIRECT_ROUTE_MODE)
     var vpnMtu by rememberMmkvString(AppConfig.PREF_VPN_MTU, "")
 
     var mux by rememberMmkvBool(AppConfig.PREF_MUX_ENABLED, false)
@@ -199,6 +200,8 @@ fun SettingsScreen(
     val languageValues = stringArrayResource(R.array.language_select_value).toList()
     val uiModeNightEntries = stringArrayResource(R.array.ui_mode_night).toList()
     val uiModeNightValues = stringArrayResource(R.array.ui_mode_night_value).toList()
+    val directRouteEntries = stringArrayResource(R.array.direct_route_mode).toList()
+    val directRouteValues = stringArrayResource(R.array.direct_route_mode_value).toList()
     val bypassLanEntries = stringArrayResource(R.array.vpn_bypass_lan).toList()
     val bypassLanValues = stringArrayResource(R.array.vpn_bypass_lan_value).toList()
     val interfaceAddrEntries = stringArrayResource(R.array.vpn_interface_address).toList()
@@ -355,6 +358,13 @@ fun SettingsScreen(
                     selectedValue = vpnBypassLan,
                     enabled = isVpn,
                     onSelected = { vpnBypassLan = it }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_direct_route_mode),
+                    entries = directRouteEntries,
+                    values = directRouteValues,
+                    selectedValue = directRouteMode,
+                    onSelected = { directRouteMode = it }
                 )
                 SettingsListItem(
                     title = stringResource(R.string.title_pref_vpn_interface_address),

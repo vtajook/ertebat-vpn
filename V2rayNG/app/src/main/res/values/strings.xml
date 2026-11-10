@@ -592,4 +592,10 @@
     <string name="toast_openvpn_config_invalid">The OpenVPN config is invalid: a "remote" line is required</string>
     <string name="menu_item_import_config_manually_l2tp">Add [L2TP/IPsec]</string>
     <string name="server_lab_l2tp_psk">IPsec pre-shared key (secret)</string>
+    <string name="title_pref_direct_route_mode">Direct route mode (OpenVPN / Cisco / L2TP)</string>
+    <string-array name="direct_route_mode">
+        <item>0 - Plain routes (no VPN icon on some phones)</item>
+        <item>1 - Default route + all exclusions (icon, may lag)</item>
+        <item>2 - Default route + Iran exclusions only (recommended)</item>
+    </string-array>
 </resources>
